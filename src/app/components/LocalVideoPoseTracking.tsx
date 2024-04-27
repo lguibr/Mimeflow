@@ -1,84 +1,93 @@
 "use client";
-
-import React, { useRef, useEffect } from "react";
+import React, { useRef, useEffect, useState } from "react";
 import * as poseDetection from "@tensorflow-models/pose-detection";
-
 import p5 from "p5";
 import styled from "styled-components";
+import { useRouter } from "next/navigation";
 
 const threshold = 0.4;
-
 const defaultConfig: poseDetection.PoseNetEstimationConfig = {
   flipHorizontal: false,
 };
 
-const PoseTracking: React.FC<{ net: poseDetection.PoseDetector }> = ({
+interface PoseTrackingProps {
+  net: poseDetection.PoseDetector;
+  setPoses: React.Dispatch<React.SetStateAction<poseDetection.Pose[]>>;
+  file: File;
+  isPlaying: boolean;
+  onEnd: () => void;
+}
+
+const PoseTracking: React.FC<PoseTrackingProps> = ({
   net,
+  setPoses,
+  file,
+  isPlaying,
+  onEnd,
 }) => {
   const p5ContainerRef = useRef<HTMLDivElement>(null);
   const p5InstanceRef = useRef<p5>();
 
   useEffect(() => {
-    let isPaused = true;
+    const { width, height } =
+      p5ContainerRef.current?.getBoundingClientRect() || {};
+
     const sketch = (p: p5) => {
       let video: p5.MediaElement;
-      let scaleRatio = 1;
+      let scaleFactor = 1;
 
       p.setup = async () => {
-        video = p.createVideo("/video.mp4", (a) => {});
-        video.hide();
-
-        // Wait for the video to load
-        await new Promise((resolve) => {
-          video.elt.onloadedmetadata = () => {
-            resolve(null);
-          };
-        });
-        const { width, height } =
-          p5ContainerRef.current!.getBoundingClientRect();
-
-        p.createCanvas(width, height).parent(p5ContainerRef.current!);
-
-        p.frameRate(120);
+        if (file) {
+          video = p.createVideo(URL.createObjectURL(file), () => {
+            video.onended(() => {
+              video.remove();
+              onEnd();
+            });
+          });
+          video.hide();
+          await new Promise((resolve) => {
+            video.elt.onloadedmetadata = () => {
+              resolve(null);
+            };
+          });
+        }
+        p.createCanvas(width ?? 1, height ?? 1).parent(p5ContainerRef.current!);
+        p.frameRate(40);
       };
+
       p.windowResized = () => {
         const { width, height } =
-          p5ContainerRef.current!.getBoundingClientRect();
-        p.resizeCanvas(width, height);
-      };
-      p.mousePressed = () => {
-        console.log("clicked");
-
-        if (isPaused) {
-          video?.play();
-          isPaused = !isPaused;
-        } else {
-          video?.pause();
-          isPaused = !isPaused;
-        }
+          p5ContainerRef.current?.getBoundingClientRect() ?? {};
+        p.resizeCanvas(width || 1, height || 1);
       };
 
       p.draw = async () => {
         if (video && (video as any).loadedmetadata) {
-          const containerHeight = p5ContainerRef.current!.offsetHeight;
+          if (isPlaying) video.play();
+          else video.pause();
+
+          const containerWidth = p5ContainerRef.current?.offsetWidth || 1;
+          const containerHeight = p5ContainerRef.current?.offsetHeight || 1;
           const videoWidth = (video as any).width;
           const videoHeight = (video as any).height;
-
-          scaleRatio = containerHeight / videoHeight;
-
-          const scaledWidth = videoWidth * scaleRatio;
-          const scaledHeight = videoHeight * scaleRatio;
-          const x = (p.width - scaledWidth) / 2;
-          const y = 0;
-
-          const poses = await net?.estimatePoses(
+          const aspectRatio = videoWidth / videoHeight;
+          let displayWidth = containerWidth;
+          let displayHeight = containerWidth / aspectRatio;
+          if (displayHeight > containerHeight) {
+            displayHeight = containerHeight;
+            displayWidth = displayHeight * aspectRatio;
+          }
+          scaleFactor = displayWidth / videoWidth;
+          const x = (containerWidth - displayWidth) / 2;
+          const y = (containerHeight - displayHeight) / 2;
+          const detectedPoses = await net?.estimatePoses(
             video.elt as HTMLVideoElement,
             defaultConfig
           );
-
           p.clear();
-          p.image(video, x, y, scaledWidth, scaledHeight);
-          drawPose(poses, scaleRatio, x, y);
+          p.image(video, x, y, displayWidth, displayHeight);
+          setPoses(detectedPoses);
+          drawPose(detectedPoses, scaleFactor, x, y);
         }
       };
 
@@ -129,16 +138,27 @@ const PoseTracking: React.FC<{ net: poseDetection.PoseDetector }> = ({
     };
 
     p5InstanceRef.current = new p5(sketch);
+  }, [file, isPlaying, net, setPoses]);
 
+  useEffect(() => {
     return () => {
       p5InstanceRef.current?.remove();
     };
-  }, [net]);
+  }, []);
+
+  const { push } = useRouter();
+
+  if (!file) {
+    push("/");
+    return null;
+  }
 
   return (
-    <Container>
-      <CanvasContainer ref={p5ContainerRef} />
-    </Container>
+    <>
+      <Container>
+        <CanvasContainer ref={p5ContainerRef}></CanvasContainer>
+      </Container>
+    </>
   );
 };
 
@@ -147,30 +167,33 @@ export default PoseTracking;
 const CanvasContainer = styled.div`
   position: absolute;
   z-index: 9999999999;
-  border: 10px dotted black;
   width: 100%;
   height: 100%;
   top: 0;
   right: 0;
-
+  box-sizing: border-box;
   canvas {
     position: absolute;
-    z-index: 9999999999;
-    border: 10px dotted black;
+    z-index: 999;
     top: 0;
     right: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
   }
-
   video {
     position: absolute;
-    z-index: 9999999999;
-    border: 10px dotted black;
+    z-index: 999;
     top: 0;
     right: 0;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
   }
 `;
 
 const Container = styled.div`
   position: relative;
-  border: 10px dotted red;
+  height: 100%;
+  width: 100%;
 `;

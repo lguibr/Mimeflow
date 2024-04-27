@@ -1,21 +1,15 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import MultiUpload from "./components/MultiUpload";
-import { useFile } from "./contexts/File";
 import styled from "styled-components";
 
 const HomeView: React.FC = () => {
-  const { file } = useFile();
   const { push } = useRouter();
-  if (file) {
-    push("/tracking");
-  }
+
   return (
     <main>
       <Container>
         <h1>Project Mimic</h1>
-        <MultiUpload />
       </Container>
     </main>
   );

@@ -10,7 +10,7 @@ import p5 from "p5";
 import styled from "styled-components";
 import "@mediapipe/pose";
 
-const threshold = 0.4;
+const threshold = 0;
 
 const defaultConfig:
   | LegacySinglePersonInferenceConfig
@@ -21,16 +21,16 @@ const defaultConfig:
 
 interface PoseTrackingProps {
   net: poseDetection.PoseDetector;
-  poses: poseDetection.Pose[];
-  setPose: React.Dispatch<React.SetStateAction<poseDetection.Pose[]>>;
+  setPoses: React.Dispatch<React.SetStateAction<poseDetection.Pose[]>>;
 }
 
-const PoseTracking: React.FC<PoseTrackingProps> = ({ net, poses, setPose }) => {
+const PoseTracking: React.FC<PoseTrackingProps> = ({
+  net,
+  setPoses: setPose,
+}) => {
   const webcamRef = useRef<Webcam>(null);
   const p5ContainerRef = useRef<HTMLDivElement>(null);
   const p5InstanceRef = useRef<p5>();
-  console.log("poses");
-  console.log(poses);
 
   useEffect(() => {
     const sketch = (p: p5) => {
@@ -38,7 +38,6 @@ const PoseTracking: React.FC<PoseTrackingProps> = ({ net, poses, setPose }) => {
       let scaleRatio = 1;
 
       p.setup = async () => {
-        console.log("setup");
         const { width, height } =
           p5ContainerRef.current!.getBoundingClientRect();
         p.createCanvas(width, height).parent(p5ContainerRef.current!);
@@ -46,7 +45,7 @@ const PoseTracking: React.FC<PoseTrackingProps> = ({ net, poses, setPose }) => {
         video = p.createCapture(VIDEO);
         video.size(640, 480);
         video.hide();
-        p.frameRate(120);
+        p.frameRate(40);
       };
 
       p.windowResized = () => {
@@ -141,11 +140,9 @@ const PoseTracking: React.FC<PoseTrackingProps> = ({ net, poses, setPose }) => {
       <Webcam
         ref={webcamRef}
         style={{
-          width: 640,
-          height: 480,
           position: "absolute",
           right: 0,
-          border: "4px dotted blue",
+          display: "none",
         }}
       />
       <CanvasContainer ref={p5ContainerRef} />
@@ -157,30 +154,29 @@ export default PoseTracking;
 
 const Container = styled.div`
   position: relative;
-  border: 10px dotted red;
+  height: 100%;
+  width: 100%;
 `;
 
 const CanvasContainer = styled.div`
   position: absolute;
-  z-index: 9999999999;
-  border: 10px dotted black;
+  z-index: 999;
   width: 100%;
   height: 100%;
   top: 0;
   right: 0;
+  box-sizing: border-box;
 
   canvas {
     position: absolute;
-    z-index: 9999999999;
-    border: 10px dotted black;
+    z-index: 999;
     top: 0;
     right: 0;
   }
 
   video {
     position: absolute;
-    z-index: 9999999999;
-    border: 10px dotted black;
+    z-index: 999;
     top: 0;
     right: 0;
   }

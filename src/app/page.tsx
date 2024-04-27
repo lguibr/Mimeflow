@@ -1,95 +1,97 @@
-import Image from "next/image";
-import styles from "./page.module.css";
+"use client";
 
-export default function Home() {
+import "@tensorflow/tfjs-backend-webgl";
+
+import React, { useEffect, useState } from "react";
+import styled from "styled-components";
+import * as tf from "@tensorflow/tfjs-core";
+import * as poseDetection from "@tensorflow-models/pose-detection";
+import * as tfjsWasm from "@tensorflow/tfjs-backend-wasm";
+import * as mpPose from "@mediapipe/pose";
+import dynamic from "next/dynamic";
+
+const WebcamPoseTracking = dynamic(
+  () => import("@/app/components/WebcamPoseTracking"),
+  {
+    ssr: false,
+  }
+);
+const LocalVideoPoseTracking = dynamic(
+  () => import("@/app/components/LocalVideoPoseTracking"),
+  {
+    ssr: false,
+  }
+);
+const App: React.FC = () => {
+  const [webcamPose, setWebcamPose] = useState<poseDetection.Pose[]>([]);
+  const loadPoseNet = async () => {
+    await tfjsWasm.setWasmPaths(
+      `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${tfjsWasm.version_wasm}/dist/`
+    );
+
+    await tf.ready();
+
+    const video: poseDetection.PoseDetector =
+      await poseDetection.createDetector(
+        poseDetection.SupportedModels.BlazePose,
+        {
+          runtime: "mediapipe",
+          modelType: "heavy",
+          solutionPath: `https://cdn.jsdelivr.net/npm/@mediapipe/pose@${mpPose.VERSION}`,
+        }
+      );
+    const webcam: poseDetection.PoseDetector =
+      await poseDetection.createDetector(
+        poseDetection.SupportedModels.BlazePose,
+        {
+          runtime: "mediapipe",
+          modelType: "heavy",
+          solutionPath: `https://cdn.jsdelivr.net/npm/@mediapipe/pose@${mpPose.VERSION}`,
+        }
+      );
+    setVideoNet(video);
+    setWebcamNet(webcam);
+  };
+
+  const [videoNet, setVideoNet] = useState<
+    poseDetection.PoseDetector | undefined
+  >(undefined);
+
+  const [webcamNet, setWebcamNet] = useState<
+    poseDetection.PoseDetector | undefined
+  >(undefined);
+
+  useEffect(() => {
+    if (!videoNet && !webcamNet) {
+      loadPoseNet();
+    }
+  }, []);
+
   return (
-    <main className={styles.main}>
-      <div className={styles.description}>
-        <p>
-          Get started by editing&nbsp;
-          <code className={styles.code}>src/app/page.tsx</code>
-        </p>
-        <div>
-          <a
-            href="https://vercel.com?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            By{" "}
-            <Image
-              src="/vercel.svg"
-              alt="Vercel Logo"
-              className={styles.vercelLogo}
-              width={100}
-              height={24}
-              priority
+    <main>
+      <Container>
+        {videoNet && webcamNet && window !== null && (
+          <>
+            <LocalVideoPoseTracking net={videoNet} />
+            <WebcamPoseTracking
+              poses={webcamPose}
+              setPose={setWebcamPose}
+              net={webcamNet}
             />
-          </a>
-        </div>
-      </div>
-
-      <div className={styles.center}>
-        <Image
-          className={styles.logo}
-          src="/next.svg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-
-      <div className={styles.grid}>
-        <a
-          href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Docs <span>-&gt;</span>
-          </h2>
-          <p>Find in-depth information about Next.js features and API.</p>
-        </a>
-
-        <a
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Learn <span>-&gt;</span>
-          </h2>
-          <p>Learn about Next.js in an interactive course with&nbsp;quizzes!</p>
-        </a>
-
-        <a
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Templates <span>-&gt;</span>
-          </h2>
-          <p>Explore starter templates for Next.js.</p>
-        </a>
-
-        <a
-          href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template&utm_campaign=create-next-app"
-          className={styles.card}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <h2>
-            Deploy <span>-&gt;</span>
-          </h2>
-          <p>
-            Instantly deploy your Next.js site to a shareable URL with Vercel.
-          </p>
-        </a>
-      </div>
+          </>
+        )}
+      </Container>
     </main>
   );
-}
+};
+
+export default App;
+
+const Container = styled.div`
+  border: 10px dotted green;
+  display: grid;
+  grid-template-rows: 70%% 30%;
+  height: 100vh;
+  width: 100vw;
+  box-sizing: border-box;
+`;

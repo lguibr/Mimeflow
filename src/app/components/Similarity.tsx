@@ -16,12 +16,24 @@ interface IKeypoint3D {
 const connections = poseDetection.util.getAdjacentPairs(
   poseDetection.SupportedModels.BlazePose
 );
+
 function cosineSimilarity(
   poseOne: IKeypoint3D[],
-  poseTwo: IKeypoint3D[]
+  poseTwo: IKeypoint3D[],
+  method: "current" | "noAngles" | "allPermutations"
 ): number {
-  const featuresOne = extractFeaturesFromKeypoints(poseOne);
-  const featuresTwo = extractFeaturesFromKeypoints(poseTwo);
+  const featuresOne =
+    method === "current"
+      ? extractFeaturesFromKeypoints(poseOne)
+      : method === "noAngles"
+      ? extractFeaturesFromKeypointsNoAngles(poseOne)
+      : extractFeaturesFromKeypointsAllPermutations(poseOne);
+  const featuresTwo =
+    method === "current"
+      ? extractFeaturesFromKeypoints(poseTwo)
+      : method === "noAngles"
+      ? extractFeaturesFromKeypointsNoAngles(poseTwo)
+      : extractFeaturesFromKeypointsAllPermutations(poseTwo);
 
   const tensorOne = tf.tensor(featuresOne);
   const tensorTwo = tf.tensor(featuresTwo);
@@ -45,8 +57,8 @@ function extractFeaturesFromKeypoints(keypoints: IKeypoint3D[]): number[] {
     return [
       keypoint.x * score,
       keypoint.y * score,
-      (keypoint.z || 0) * score, // Apply the score to z-coordinate, defaulting z to 0
-    ].map((feature) => (score < 0.5 ? 0 : feature)); // Apply threshold to each coordinate
+      (keypoint.z || 0) * score,
+    ].map((feature) => (score < 0.5 ? 0 : feature));
   });
 
   const angleTriples = generateUniqueTriples(connections);
@@ -62,7 +74,6 @@ function extractFeaturesFromKeypoints(keypoints: IKeypoint3D[]): number[] {
         keypointTwo,
         keypointThree
       );
-      // Calculate the average score and apply threshold to angles
       const scores = [
         keypointOne.score,
         keypointTwo.score,
@@ -72,7 +83,62 @@ function extractFeaturesFromKeypoints(keypoints: IKeypoint3D[]): number[] {
       if (averageScore >= 0.5) {
         features.push(phi * averageScore, theta * averageScore);
       } else {
-        features.push(0, 0); // Set angles to 0 if the average score is below the threshold
+        features.push(0, 0);
+      }
+    }
+  });
+
+  return features;
+}
+
+function extractFeaturesFromKeypointsNoAngles(
+  keypoints: IKeypoint3D[]
+): number[] {
+  return keypoints.flatMap((keypoint) => {
+    const score = keypoint.score || 1;
+    return [
+      keypoint.x * score,
+      keypoint.y * score,
+      (keypoint.z || 0) * score,
+    ].map((feature) => (score < 0.5 ? 0 : feature));
+  });
+}
+
+function extractFeaturesFromKeypointsAllPermutations(
+  keypoints: IKeypoint3D[]
+): number[] {
+  const features: number[] = keypoints.flatMap((keypoint, index) => {
+    const score = keypoint.score || 1;
+    return [
+      keypoint.x * score,
+      keypoint.y * score,
+      (keypoint.z || 0) * score,
+    ].map((feature) => (score < 0.5 ? 0 : feature));
+  });
+
+  const angleTriples = generateAllPermutations(keypoints.length, 3);
+  angleTriples.forEach((triple) => {
+    const [firstIndex, secondIndex, thirdIndex] = triple;
+    const keypointOne = keypoints[firstIndex];
+    const keypointTwo = keypoints[secondIndex];
+    const keypointThree = keypoints[thirdIndex];
+
+    if (keypointOne && keypointTwo && keypointThree) {
+      const { phi, theta } = calculateSphericalAngles(
+        keypointOne,
+        keypointTwo,
+        keypointThree
+      );
+      const scores = [
+        keypointOne.score,
+        keypointTwo.score,
+        keypointThree.score,
+      ].map((s) => s || 1);
+      const averageScore = (scores[0] + scores[1] + scores[2]) / 3;
+      if (averageScore >= 0.5) {
+        features.push(phi * averageScore, theta * averageScore);
+      } else {
+        features.push(0, 0);
       }
     }
   });
@@ -111,12 +177,12 @@ function calculateSphericalAngles(
     vectorOneSpherical.phi - vectorTwoSpherical.phi
   );
 
-  // Clean up tensors
   vectorOne.dispose();
   vectorTwo.dispose();
 
   return { theta: thetaDifference, phi: phiDifference };
 }
+
 function cartesianToSpherical(vector: tf.Tensor): {
   r: number;
   theta: number;
@@ -127,8 +193,8 @@ function cartesianToSpherical(vector: tf.Tensor): {
   const z = vector.dataSync()[2];
 
   const r = Math.sqrt(x * x + y * y + z * z);
-  const theta = Math.acos(z / r); // Polar angle
-  const phi = Math.atan2(y, x); // Azimuthal angle
+  const theta = Math.acos(z / r);
+  const phi = Math.atan2(y, x);
 
   return { r, theta, phi };
 }
@@ -136,7 +202,6 @@ function cartesianToSpherical(vector: tf.Tensor): {
 function generateUniqueTriples(pairs: number[][]): number[][] {
   const uniqueTriples = new Set<string>();
 
-  // Create a mapping of each number to all other numbers it's paired with
   const map = new Map<number, Set<number>>();
   pairs.forEach(([a, b]) => {
     if (!map.has(a)) map.set(a, new Set());
@@ -145,7 +210,6 @@ function generateUniqueTriples(pairs: number[][]): number[][] {
     map.get(b)?.add(a);
   });
 
-  // Generate all possible triples
   pairs.forEach(([first, second]) => {
     const connectedToFirst = map.get(first);
     const connectedToSecond = map.get(second);
@@ -157,33 +221,70 @@ function generateUniqueTriples(pairs: number[][]): number[][] {
     });
   });
 
-  // Convert the set of string triples back to array of number arrays
   return Array.from(uniqueTriples).map((triple) =>
     triple.split(",").map(Number)
   );
+}
+
+function generateAllPermutations(n: number, r: number): number[][] {
+  const result: number[][] = [];
+
+  function backtrack(combination: number[], start: number) {
+    if (combination.length === r) {
+      result.push([...combination]);
+      return;
+    }
+
+    for (let i = start; i < n; i++) {
+      combination.push(i);
+      backtrack(combination, i + 1);
+      combination.pop();
+    }
+  }
+
+  backtrack([], 0);
+  return result;
 }
 
 const Similarity: FC<{
   poseOne: IKeypoint3D[];
   poseTwo: IKeypoint3D[];
 }> = ({ poseOne, poseTwo }) => {
-  const similarity = cosineSimilarity(poseOne, poseTwo);
+  const similarityCurrent = cosineSimilarity(poseOne, poseTwo, "current");
+  const similarityNoAngles = cosineSimilarity(poseOne, poseTwo, "noAngles");
+  const similarityAllPermutations = cosineSimilarity(
+    poseOne,
+    poseTwo,
+    "allPermutations"
+  );
+
   return (
     <Container>
-      <h1>{similarity}</h1>
+      <h2>Current Implementation</h2>
+      <h1>{similarityCurrent}</h1>
+      <h2>No Angles</h2>
+      <h1>{similarityNoAngles}</h1>
+      <h2>All Permutations</h2>
+      <h1>{similarityAllPermutations}</h1>
     </Container>
   );
 };
+
 export default Similarity;
 
 const Container = styled.div`
   display: flex;
+  flex-direction: row;
   justify-content: center;
   align-items: center;
   height: 100%;
   width: 100%;
   box-sizing: border-box;
-  h1 {
+  h1,
+  h2 {
     color: white;
+  }
+  h2 {
+    margin-top: 20px;
   }
 `;

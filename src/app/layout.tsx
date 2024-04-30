@@ -32,6 +32,7 @@ export default function RootLayout({
     width: 100vw;
     margin: 0;
     padding: 0;
+    background:#000626ff;
   }
   body {
     box-sizing: border-box;

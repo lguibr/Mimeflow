@@ -1,4 +1,5 @@
 "use client";
+
 import styled, { createGlobalStyle } from "styled-components";
 import StyledComponentsRegistry from "./lib/registry";
 
@@ -6,7 +7,11 @@ import { FileProvider } from "@/app/contexts/File";
 import { GameProvider } from "@/app/contexts/Game";
 import { SettingsProvider } from "./contexts/Settings";
 import AppBar from "./components/core/AppBar";
-import Background from "./components/core/Background";
+
+import dynamic from "next/dynamic";
+const Background = dynamic(() => import("@/app/components/core/Background"), {
+  ssr: false,
+});
 
 export default function RootLayout({
   children,
@@ -19,7 +24,7 @@ export default function RootLayout({
   *::after {
     margin: 0;
     padding: 0;
-    box-sizing: inherit;
+    box-sizing: border-box;
   }
   html {
     font-size: 62.5%; /* equivalent to 10px; 1rem = 10px; 10px/16px */
@@ -35,6 +40,7 @@ export default function RootLayout({
     width: 100vw;
     margin: 0;
     padding: 0;
+    box-sizing: border-box;
   }
 `;
 

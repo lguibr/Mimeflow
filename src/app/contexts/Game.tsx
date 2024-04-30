@@ -94,7 +94,6 @@ const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
   }, [similarity, isPaused]);
 
   useEffect(() => {
-    
     const loadPoseNet = async () => {
       await tfjsWasm.setWasmPaths(
         `https://cdn.jsdelivr.net/npm/@tensorflow/tfjs-backend-wasm@${tfjsWasm.version_wasm}/dist/`

@@ -9,7 +9,9 @@ import React, {
 // Define the type for the context state
 type FileContextType = {
   file: File | null;
+  hash: string;
   setFile: (file: File | null) => void;
+  setHash: (file: string) => void;
 };
 
 // Create the context with a default value
@@ -22,9 +24,10 @@ type FileProviderProps = {
 
 export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
   const [file, setFile] = useState<File | null>(null);
+  const [hash, setHash] = useState<string>("");
   const currentFile = useMemo(() => file, [file]);
   return (
-    <FileContext.Provider value={{ file: currentFile, setFile }}>
+    <FileContext.Provider value={{ file: currentFile, setFile, hash, setHash }}>
       {children}
     </FileContext.Provider>
   );

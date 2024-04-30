@@ -14,8 +14,6 @@ interface Pose3DViewerProps {
   type: "webcam" | "video";
 }
 
-const threshold = 0;
-
 const Pose3DViewer: React.FC<Pose3DViewerProps> = ({ type }) => {
   const p5ContainerRef = useRef<HTMLDivElement>(null);
   const p5InstanceRef = useRef<p5 | null>(null);

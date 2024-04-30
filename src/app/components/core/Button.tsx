@@ -4,13 +4,13 @@ import styled from "styled-components";
 const ToggleButton = styled.button`
   background-color: #222;
   color: #fff;
-  border: 2px solid #444;
-  padding: 8px 16px;
-  font-size: 14px;
+  font-size: 16px;
+  border: none;
+  border-radius: 8px;
   cursor: pointer;
-  border-radius: 10px;
   outline: none;
-  transition: background-color 0.3s, color 0.3s;
+  transition: background-color 0.3s;
+  padding: 5px;
 
   &:hover {
     background-color: #333;

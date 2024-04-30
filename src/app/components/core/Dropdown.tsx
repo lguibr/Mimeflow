@@ -1,5 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import styled from "styled-components";
+import SettingsIcon from "./SettingsIcon";
 
 const DropdownContainer = styled.div`
   position: relative;
@@ -15,6 +16,7 @@ const DropdownButton = styled.button`
   cursor: pointer;
   outline: none;
   transition: background-color 0.3s;
+  padding: 5px;
 
   &:hover {
     background-color: #333;
@@ -25,33 +27,19 @@ const DropdownContent = styled.div<{ isOpen: boolean }>`
   display: ${(props) => (props.isOpen ? "block" : "none")};
   position: absolute;
   background-color: #333;
-  min-width: 300px;
-  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
+  min-width: 150px;
+
   z-index: 1;
   border-radius: 8px;
-  padding: 12px 16px;
   margin-top: 5px;
-`;
-
-const HamburgerIcon = styled.svg`
-  fill: #fff; // White fill color
-  width: 40px; // Width of the icon
-  height: 30px; // Height of the icon
-  cursor: pointer; // Cursor indicates that it's clickable
+  right: 0;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
   &:hover {
-    fill: #ccc; // Lighter fill on hover
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
   }
 `;
-
-const MenuIcon: React.FC = () => {
-  return (
-    <HamburgerIcon viewBox="0 0 100 80" xmlns="http://www.w3.org/2000/svg">
-      <rect width="100" height="20"></rect>
-      <rect y="30" width="100" height="20"></rect>
-      <rect y="60" width="100" height="20"></rect>
-    </HamburgerIcon>
-  );
-};
 
 const Dropdown: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [isOpen, setIsOpen] = useState(false);
@@ -73,7 +61,7 @@ const Dropdown: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   return (
     <DropdownContainer ref={ref} onClick={(e) => e.stopPropagation()}>
       <DropdownButton onClick={() => setIsOpen(!isOpen)}>
-        <MenuIcon />
+        <SettingsIcon />
       </DropdownButton>
       <DropdownContent isOpen={isOpen}>{children}</DropdownContent>
     </DropdownContainer>

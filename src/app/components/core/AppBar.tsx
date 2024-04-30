@@ -4,6 +4,9 @@ import Logo from "./Logo";
 import Dropdown from "./Dropdown";
 import Switch from "./Switch";
 import { useSettings } from "@/app/contexts/Settings";
+import Link from "next/link";
+import { useGameActions } from "@/app/contexts/Game";
+import { useFile } from "@/app/contexts/File";
 
 const AppBarContainer = styled.div`
   position: fixed;
@@ -18,6 +21,8 @@ const AppBarContainer = styled.div`
   padding: 0 20px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
   z-index: 1000;
+  display: flex;
+  justify-content: space-between;
 `;
 
 const AppBarTitle = styled.h1`
@@ -25,6 +30,7 @@ const AppBarTitle = styled.h1`
   font-size: 24px;
   display: flex;
   gap: 10px;
+  cursor: pointer;
 `;
 
 const AppBar = () => {
@@ -38,49 +44,67 @@ const AppBar = () => {
     setWebcamPreview3D,
     webcamPreview,
   } = useSettings();
+  const { setHistory } = useGameActions();
+  const { setFile } = useFile();
+
+  const resetGame = () => {
+    setFile(null);
+    setHistory([]);
+  };
+
   return (
     <AppBarContainer onClick={(e) => e.stopPropagation()}>
-      <AppBarTitle>
-        <Dropdown>
-          <div>
-            <p>Preview Score</p>
-            <Switch
-              options={[false, true]}
-              setSelectedOption={setScorePreview}
-              selectedOption={scorePreview}
-            />
-          </div>
-          <div>
-            <p>3D Webcam Pose</p>
-            <Switch
-              options={[false, true]}
-              setSelectedOption={setWebcamPreview3D}
-              selectedOption={webcamPreview3D}
-            />
-          </div>
-          <div>
-            <p>3D Video Pose</p>
-            <Switch
-              options={[false, true]}
-              setSelectedOption={setVidePreview3D}
-              selectedOption={videoPreview3D}
-            />
-          </div>
-          <div>
-            <p>Preview Webcam</p>
-            <Switch
-              options={[false, true]}
-              setSelectedOption={setWebcamPreview}
-              selectedOption={webcamPreview}
-            />
-          </div>
-        </Dropdown>
-
-        <Logo width="30px" height="30px" />
+      <AppBarTitle onClick={resetGame}>
+        <Link href={"/"}>
+          <Logo width="30px" height="30px" />
+        </Link>
         <p>Mime Flow</p>
       </AppBarTitle>
+      <Dropdown>
+        <Row>
+          <h3>Preview Score</h3>
+          <Switch
+            options={[false, true]}
+            setSelectedOption={setScorePreview}
+            selectedOption={scorePreview}
+          />
+        </Row>
+        <Row>
+          <h3>3D Webcam Pose</h3>
+          <Switch
+            options={[false, true]}
+            setSelectedOption={setWebcamPreview3D}
+            selectedOption={webcamPreview3D}
+          />
+        </Row>
+        <Row>
+          <h3>3D Video Pose</h3>
+          <Switch
+            options={[false, true]}
+            setSelectedOption={setVidePreview3D}
+            selectedOption={videoPreview3D}
+          />
+        </Row>
+        <Row>
+          <h3>Preview Webcam</h3>
+          <Switch
+            options={[false, true]}
+            setSelectedOption={setWebcamPreview}
+            selectedOption={webcamPreview}
+          />
+        </Row>
+      </Dropdown>
     </AppBarContainer>
   );
 };
 
 export default AppBar;
+
+const Row = styled.div`
+  border-radius: 8px;
+  padding: 5px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  flex-direction: column;
+`;

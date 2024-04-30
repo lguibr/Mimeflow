@@ -82,7 +82,7 @@ export const drawPose3D = (
         p.random(-10, 10)
       );
 
-      p.sphere(canvasHeight / 70);
+      p.sphere(canvasHeight / 80);
       p.pop();
     }
   });

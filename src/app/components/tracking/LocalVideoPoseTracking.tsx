@@ -1,4 +1,5 @@
 "use client";
+
 import React, { useRef, useEffect } from "react";
 import * as poseDetection from "@tensorflow-models/pose-detection";
 import p5 from "p5";

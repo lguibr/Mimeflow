@@ -1,48 +1,19 @@
 "use client";
 
-import { useRouter } from "next/navigation";
-import styled from "styled-components";
-import { useGameActions, useGameViews } from "../contexts/Game";
-import { useFile } from "../contexts/File";
-import ScoreGraph from "../components/score/ScoreGraph";
-import Button from "../components/core/Button";
+import dynamic from "next/dynamic";
+import Grid from "@/app/components/core/Grid";
+const ScoreView = dynamic(() => import("@/app/components/score"), {
+  ssr: false,
+});
 
-const HomeView: React.FC = () => {
-  const { push } = useRouter();
-  const { setFile } = useFile();
-  const { score } = useGameViews();
-  const { togglePause, setHistory } = useGameActions();
-  if (!score) {
-    setFile(null);
-    push("/");
-    return null;
-  }
-  const resetGame = () => {
-    setFile(null);
-    setHistory([]);
-    togglePause();
-    push("/");
-  };
+const ScorePaGe: React.FC = () => {
   return (
     <main>
-      <Container>
-        <ScoreGraph />
-        <Button onClick={resetGame}>Play Again</Button>
-      </Container>
+      <Grid gridSpan={{ xs: [1, 12], sm: [1, 12], md: [2, 11], lg: [3, 10] }}>
+        <ScoreView />
+      </Grid>
     </main>
   );
 };
 
-export default HomeView;
-
-const Container = styled.div`
-  display: flex;
-  justify-content: space-around;
-  align-items: center;
-  height: 100vh;
-  width: 100vw;
-  padding: 10rem;
-  flex-direction: column;
-  gap: 20%;
-  color: white;
-`;
+export default ScorePaGe;

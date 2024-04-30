@@ -6,6 +6,9 @@ const SwitchContainer = styled.div`
   gap: 8px;
   align-items: center;
   margin: 10px 0;
+  background-color: #222;
+  border-radius: 8px;
+  width: fit-content;
 `;
 
 const Option = styled.button<{ isSelected: boolean }>`
@@ -17,17 +20,15 @@ const Option = styled.button<{ isSelected: boolean }>`
   border-radius: 8px;
   font-size: 14px;
   transition: background-color 0.3s;
-
   &:hover {
     background-color: #555;
   }
 `;
 
-// Generic Type T for option values
 interface SwitchProps<T> {
   options: T[];
-  selectedOption: T; // The selected option
-  setSelectedOption: (option: T) => void; // Callback to set the selected option
+  selectedOption: T;
+  setSelectedOption: (option: T) => void;
 }
 
 function Switch<T>({

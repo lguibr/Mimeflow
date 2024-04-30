@@ -66,7 +66,6 @@ const LineGraph: React.FC = () => {
   return (
     <Container>
       <Line data={data} options={options} />
-      <Score>{score.toFixed(2)}</Score>
     </Container>
   );
 };
@@ -80,9 +79,5 @@ const Container = styled.div`
   justify-content: center;
   width: 100%;
   height: 300px;
-  margin-top: 20px;
-`;
-
-const Score = styled.h1`
   margin-top: 20px;
 `;

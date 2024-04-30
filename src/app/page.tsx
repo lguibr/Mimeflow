@@ -1,9 +1,10 @@
 "use client";
 
 import { useRouter } from "next/navigation";
-import MultiUpload from "./components/MultiUpload";
+import MultiUpload from "@/app/components/home/MultiUpload";
 import { useFile } from "./contexts/File";
 import styled from "styled-components";
+import Logo from "@/app/components/core/Logo";
 
 const HomeView: React.FC = () => {
   const { file } = useFile();
@@ -14,7 +15,6 @@ const HomeView: React.FC = () => {
   return (
     <main>
       <Container>
-        <h1>Project Mimic</h1>
         <MultiUpload />
       </Container>
     </main>
@@ -29,7 +29,7 @@ const Container = styled.div`
   align-items: center;
   height: 100vh;
   width: 100vw;
-  padding: 10rem;
+  padding: 2rem;
   flex-direction: column;
   gap: 20%;
   color: white;

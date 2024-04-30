@@ -1,13 +1,12 @@
 "use client";
-import { createGlobalStyle } from "styled-components";
+import styled, { createGlobalStyle } from "styled-components";
 import StyledComponentsRegistry from "./lib/registry";
-import dynamic from "next/dynamic";
 
-import { FileProvider } from "@/app/contexts/File"; // Assuming FileContext is in FileContext.tsx
-
-const Background = dynamic(() => import("@/app/components/Background"), {
-  ssr: false,
-});
+import { FileProvider } from "@/app/contexts/File";
+import { GameProvider } from "@/app/contexts/Game";
+import { SettingsProvider } from "./contexts/Settings";
+import AppBar from "./components/core/AppBar";
+import Background from "./components/core/Background";
 
 export default function RootLayout({
   children,
@@ -28,7 +27,6 @@ export default function RootLayout({
     width: 100vw;
     margin: 0;
     padding: 0;
-    background-color: black;
   }
   body {
     box-sizing: border-box;
@@ -43,12 +41,23 @@ export default function RootLayout({
   return (
     <html>
       <body>
-        <GlobalStyles />
-        <StyledComponentsRegistry>
-          <Background />
-          <FileProvider>{children}</FileProvider>
-        </StyledComponentsRegistry>
+        <SettingsProvider>
+          <GlobalStyles />
+          <GameProvider>
+            <StyledComponentsRegistry>
+              <FileProvider>
+                <Container>
+                  <Background />
+                  <AppBar />
+                  {children}
+                </Container>
+              </FileProvider>
+            </StyledComponentsRegistry>
+          </GameProvider>
+        </SettingsProvider>
       </body>
     </html>
   );
 }
+
+const Container = styled.div``;

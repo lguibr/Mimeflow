@@ -2,7 +2,7 @@
 
 import dynamic from "next/dynamic";
 
-const TrackingView = dynamic(() => import("@/app/components/TrackingView"), {
+const TrackingView = dynamic(() => import("@/app/components/tracking"), {
   ssr: false,
 });
 

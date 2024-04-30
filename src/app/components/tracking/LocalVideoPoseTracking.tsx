@@ -13,10 +13,6 @@ import { useGameActions, useGameViews } from "@/app/contexts/Game";
 import { draw2DPose } from "@/app/utils/draw";
 import { useFile } from "@/app/contexts/File";
 
-const defaultConfig: poseDetection.PoseNetEstimationConfig = {
-  flipHorizontal: false,
-};
-
 const VideoPoseTracking: React.FC = () => {
   const { videoNet: net, isPaused } = useGameViews();
   const { setVideoPoses: setPoses, togglePause } = useGameActions();
@@ -47,16 +43,13 @@ const VideoPoseTracking: React.FC = () => {
         if (file) {
           video = p.createVideo(URL.createObjectURL(file));
           video.hide();
-          p.frameRate(30);
+          p.frameRate(60);
 
           if (video)
             video.elt.onloadedmetadata = () => {
               if (video) {
                 video && video.elt.pause();
                 video.elt.onended = () => {
-                  console.log(
-                    "Video stopped either because it has finished playing or no further data is available."
-                  );
                   push("/score");
                 };
               }
@@ -88,8 +81,7 @@ const VideoPoseTracking: React.FC = () => {
           const y = (containerHeight - displayHeight) / 2;
 
           const detectedPoses = await net?.estimatePoses(
-            video.elt as HTMLVideoElement,
-            defaultConfig
+            video.elt as HTMLVideoElement
           );
 
           p.clear();

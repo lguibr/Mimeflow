@@ -8,8 +8,6 @@ type ContextValue = {
   setWebcamPreview3D: React.Dispatch<React.SetStateAction<boolean>>;
   videoPreview3D: boolean;
   setVidePreview3D: React.Dispatch<React.SetStateAction<boolean>>;
-  model: "lite" | "full" | "heavy";
-  setModel: React.Dispatch<React.SetStateAction<"lite" | "full" | "heavy">>;
 };
 
 // Initial Context
@@ -27,9 +25,6 @@ export const SettingsProvider = ({
 
   const checkScreenSize = () =>
     typeof window !== "undefined" && window.innerWidth >= 1024;
-  const [model, setModel] = useState<"lite" | "full" | "heavy">(
-    checkScreenSize() ? "heavy" : "lite"
-  );
 
   // Function to determine if the screen is desktop size
 
@@ -45,11 +40,10 @@ export const SettingsProvider = ({
       setWebcamPreview3D(isDesktop);
       setVidePreview3D(isDesktop);
     }
-    console.log({ model });
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, [model]);
+  }, []);
 
   return (
     <SettingsContext.Provider
@@ -60,8 +54,6 @@ export const SettingsProvider = ({
         setWebcamPreview3D,
         videoPreview3D,
         setVidePreview3D,
-        model,
-        setModel,
       }}
     >
       {children}

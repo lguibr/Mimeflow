@@ -3,8 +3,6 @@
 import styled, { createGlobalStyle } from "styled-components";
 import StyledComponentsRegistry from "./lib/registry";
 
-import { FileProvider } from "@/app/contexts/File";
-import { GameProvider } from "@/app/contexts/Game";
 import { SettingsProvider } from "./contexts/Settings";
 import AppBar from "./components/core/AppBar";
 
@@ -12,6 +10,12 @@ import dynamic from "next/dynamic";
 const Background = dynamic(() => import("@/app/components/core/Background"), {
   ssr: false,
 });
+const CoreProvider = dynamic(
+  () => import("@/app/components/core/CoreProvider"),
+  {
+    ssr: false,
+  }
+);
 
 export default function RootLayout({
   children,
@@ -51,20 +55,18 @@ export default function RootLayout({
         <head>
           <title>MimeFlow v0 - The Pose Matching Application</title>
         </head>
-        <SettingsProvider>
-          <GlobalStyles />
-          <GameProvider>
-            <StyledComponentsRegistry>
-              <FileProvider>
-                <Container>
-                  <Background />
-                  <AppBar />
-                  {children}
-                </Container>
-              </FileProvider>
-            </StyledComponentsRegistry>
-          </GameProvider>
-        </SettingsProvider>
+        <StyledComponentsRegistry>
+          <SettingsProvider>
+            <GlobalStyles />
+            <CoreProvider>
+              <Container>
+                <Background />
+                <AppBar />
+                {children}
+              </Container>
+            </CoreProvider>
+          </SettingsProvider>
+        </StyledComponentsRegistry>
       </body>
     </html>
   );

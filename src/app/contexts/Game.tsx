@@ -10,24 +10,28 @@ import React, {
   useMemo,
   useRef,
 } from "react";
+
 import * as tf from "@tensorflow/tfjs-core";
 import * as poseDetection from "@tensorflow-models/pose-detection";
 import * as mpPose from "@mediapipe/pose";
 import * as tfjsWasm from "@tensorflow/tfjs-backend-wasm";
+import {
+  PoseDetector,
+  PoseNetEstimationConfig,
+} from "@tensorflow-models/pose-detection";
 
 import {
   IKeypoint3D,
   cosineSimilarity,
   sigmoidTransformAdjusted,
 } from "../utils/calculations";
-import { useSettings } from "./Settings";
 
 interface GameState {
   similarity: number;
   score: number;
   isPaused: boolean;
-  videoNet: poseDetection.PoseDetector | null;
-  webcamNet: poseDetection.PoseDetector | null;
+  videoNet: PoseDetector | null;
+  webcamNet: PoseDetector | null;
   loaded: boolean;
   webcamPoints3d: IKeypoint3D[];
   videoPoints3d: IKeypoint3D[];
@@ -44,7 +48,9 @@ interface GameActions {
 const GameStateContext = createContext<GameState | undefined>(undefined);
 const GameActionsContext = createContext<GameActions | undefined>(undefined);
 
-const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
+const GameProvider: React.FC<{
+  children: ReactNode;
+}> = ({ children }) => {
   const videoNetRef = useRef<poseDetection.PoseDetector | null>(null);
   const webcamNetRef = useRef<poseDetection.PoseDetector | null>(null);
 
@@ -66,8 +72,6 @@ const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     () => videoPose?.keypoints3D || [],
     [videoPose?.keypoints3D]
   );
-
-  const { model } = useSettings();
 
   useEffect(() => {
     if (webcamPoints3d.length > 0 && videoPoints3d.length > 0) {
@@ -101,23 +105,20 @@ const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 
       await tf.ready();
 
-      const video: poseDetection.PoseDetector =
-        await poseDetection.createDetector(
-          poseDetection.SupportedModels.BlazePose,
-          {
-            runtime: "mediapipe",
-            modelType: model,
-            solutionPath: `https://cdn.jsdelivr.net/npm/@mediapipe/pose@${mpPose.VERSION}`,
-          }
-        );
+      const detectorConfig: poseDetection.BlazePoseMediaPipeModelConfig = {
+        runtime: "mediapipe",
+        modelType: "lite",
+        solutionPath: `https://cdn.jsdelivr.net/npm/@mediapipe/pose@${mpPose.VERSION}`,
+      };
+
+      const video = await poseDetection.createDetector(
+        poseDetection.SupportedModels.BlazePose,
+        detectorConfig
+      );
       const webcam: poseDetection.PoseDetector =
         await poseDetection.createDetector(
           poseDetection.SupportedModels.BlazePose,
-          {
-            runtime: "mediapipe",
-            modelType: model,
-            solutionPath: `https://cdn.jsdelivr.net/npm/@mediapipe/pose@${mpPose.VERSION}`,
-          }
+          detectorConfig
         );
       videoNetRef.current = video;
       webcamNetRef.current = webcam;
@@ -125,7 +126,7 @@ const GameProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
     };
 
     if (!videoNetRef.current && !webcamNetRef.current) loadPoseNet();
-  }, [model]);
+  }, []);
 
   useEffect(() => {
     !isPaused && setHistory((prev) => [...prev, score]);

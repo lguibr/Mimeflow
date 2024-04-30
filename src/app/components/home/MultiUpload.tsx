@@ -97,13 +97,9 @@ const VideoUpload: React.FC = () => {
         .map((b) => b.toString(16).padStart(2, "0"))
         .join("");
       setHash(hashHex);
-      console.log("SHA-256 Hash:", hashHex);
     };
 
-    if (file) {
-      console.log("File ready:", file);
-      computeHash(file);
-    }
+    if (file) computeHash(file);
   }, [file, setHash]);
 
   return (

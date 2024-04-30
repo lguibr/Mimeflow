@@ -50,7 +50,6 @@ const AppBar = () => {
   } = useSettings();
   const { setHistory } = useGameActions();
   const { setFile } = useFile();
-
   const resetGame = () => {
     setFile(null);
     setHistory([]);

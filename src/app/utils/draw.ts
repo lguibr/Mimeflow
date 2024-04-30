@@ -172,9 +172,10 @@ export const draw3DGrid = (
 ) => {
   const cubeSize = canvasWidth / 1.5; // Size of each cube
   const numCubes = 2; // Number of cubes per axis (total cubes = numCubes^3)
-
+  const noise = p.noise(p.frameCount / 1000); // Use Perlin noise for animation (optional
+  const mappedNoise = p.map(noise, 0, 1, 0, 255);
   p.push();
-  p.stroke(255); // White stroke for visibility
+  p.stroke(p.color(mappedNoise, mappedNoise, mappedNoise, 10)); // White stroke for visibility
   p.strokeWeight(canvasWidth / 300); // Thin stroke weight
   p.strokeJoin(p.ROUND); // Round stroke ends
   p.fill(0, 0, 0, 0); // Black fill

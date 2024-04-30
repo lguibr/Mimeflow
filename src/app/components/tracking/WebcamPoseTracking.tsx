@@ -10,10 +10,6 @@ import styled from "styled-components";
 import { draw2DPose } from "@/app/utils/draw";
 import { useGameActions, useGameViews } from "@/app/contexts/Game";
 
-const defaultConfig: poseDetection.PoseNetEstimationConfig = {
-  flipHorizontal: false,
-};
-
 const PoseTracking: React.FC = () => {
   const { webcamNet: net } = useGameViews();
   const { setWebcamPoses: setPoses } = useGameActions();
@@ -57,16 +53,18 @@ const PoseTracking: React.FC = () => {
           const y = 0;
 
           const detectedPoses = await net?.estimatePoses(
-            video.elt as HTMLVideoElement,
-            defaultConfig
+            video.elt as HTMLVideoElement
           );
 
           p.clear();
+          p.translate(p.width, 0); // Move the origin to the right side of the canvas
+          p.scale(-1, 1); // Flip the canvas horizontally
           p.image(video, x, y, scaledWidth, scaledHeight);
 
           if (detectedPoses) {
             setPoses(detectedPoses);
             draw2DPose(p, detectedPoses, scaleRatio, x, y);
+            if (detectedPoses.length > 0) console.log(detectedPoses[0]);
           }
         }
       };

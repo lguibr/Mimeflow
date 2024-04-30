@@ -58,7 +58,7 @@ const LineGraph: React.FC = () => {
     },
     plugins: {
       legend: {
-        display: false, // Set to true if you want to show the legend
+        display: false,
       },
     },
   };
@@ -80,5 +80,4 @@ const Container = styled.div`
   width: 100%;
   height: 100%;
   margin-top: 20px;
-  
 `;

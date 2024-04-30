@@ -35,7 +35,6 @@ const Pose3DViewer: React.FC<Pose3DViewerProps> = ({ type }) => {
         let canvasHeight: number;
 
         p.setup = () => {
-          // Get the parent container's dimensions on setup
           const containerRect = p5ContainerRef.current?.getBoundingClientRect();
           canvasWidth = containerRect?.width || p.windowWidth;
           canvasHeight = containerRect?.height || p.windowHeight;
@@ -43,19 +42,16 @@ const Pose3DViewer: React.FC<Pose3DViewerProps> = ({ type }) => {
           p.createCanvas(canvasWidth, canvasHeight, p.WEBGL).parent(
             p5ContainerRef.current!
           );
-          p.frameRate(60);
+          p.frameRate(30);
         };
 
         p.draw = () => {
-          let radius = canvasWidth * 2; // Set the radius of the circle
-          let angle = p.frameCount * 0.08; // This controls the speed of rotation
+          let radius = canvasWidth * 2;
+          let angle = p.frameCount * 0.08;
 
-          // Calculate x and y coordinates for circular motion
           let x = radius * p.cos(angle);
           let z = radius * p.sin(angle);
           let y = canvasHeight * 2 * p.sin(angle / 4);
-
-          // const lightPosition = p.createVector(x, 0, z);
 
           p.camera(
             x, // X coordinate

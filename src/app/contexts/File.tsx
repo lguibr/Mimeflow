@@ -6,7 +6,6 @@ import React, {
   useMemo,
 } from "react";
 
-// Define the type for the context state
 type FileContextType = {
   file: File | null;
   hash: string;
@@ -14,10 +13,8 @@ type FileContextType = {
   setHash: (file: string) => void;
 };
 
-// Create the context with a default value
 const FileContext = createContext<FileContextType | undefined>(undefined);
 
-// Create a provider component
 type FileProviderProps = {
   children: ReactNode;
 };
@@ -33,7 +30,6 @@ export const FileProvider: React.FC<FileProviderProps> = ({ children }) => {
   );
 };
 
-// Custom hook to use the file context
 export const useFile = () => {
   const context = useContext(FileContext);
   if (context === undefined) {

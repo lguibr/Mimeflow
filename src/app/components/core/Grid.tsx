@@ -1,7 +1,6 @@
 import React from "react";
 import styled from "styled-components";
 
-// Breakpoints for responsiveness
 const breakpoints = {
   xs: "480px", // Extra small devices
   sm: "640px", // Small devices
@@ -10,18 +9,16 @@ const breakpoints = {
   xl: "1280px", // Extra large devices
 };
 
-// GridContainer styled component
 const GridContainer = styled.div`
   display: grid;
   height: 100%;
   width: 100%;
   box-sizing: border-box;
   grid-template-columns: repeat(12, 1fr);
-  place-items: start; // Aligns content from the top
+  place-items: start;
   box-sizing: border-box;
 `;
 
-// GridContent styled component for specifying column start and end across breakpoints
 interface GridContentProps {
   gridSpan: { [key: string]: number[] };
 }
@@ -63,13 +60,11 @@ const GridContent = styled.div<GridContentProps>`
   }
 `;
 
-// Props type for the CentralizedLayout including children and gridSpan
 interface CentralizedLayoutProps {
   children: React.ReactNode;
   gridSpan: { [key: string]: number[] };
 }
 
-// CentralizedLayout component
 const CentralizedLayout: React.FC<CentralizedLayoutProps> = ({
   children,
   gridSpan,

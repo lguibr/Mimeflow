@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
-// Define the type for the context value
 type ContextValue = {
   scorePreview: boolean;
   setScorePreview: React.Dispatch<React.SetStateAction<boolean>>;
@@ -10,10 +9,8 @@ type ContextValue = {
   setVidePreview3D: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
-// Initial Context
 const SettingsContext = createContext<ContextValue>({} as ContextValue);
 
-// Provider component
 export const SettingsProvider = ({
   children,
 }: {
@@ -26,15 +23,11 @@ export const SettingsProvider = ({
   const checkScreenSize = () =>
     typeof window !== "undefined" && window.innerWidth >= 1024;
 
-  // Function to determine if the screen is desktop size
-
   useEffect(() => {
-    // Set initial values based on screen size
     const isDesktop = checkScreenSize();
     setWebcamPreview3D(isDesktop);
     setVidePreview3D(isDesktop);
 
-    // Handle window resize
     function handleResize() {
       const isDesktop = checkScreenSize();
       setWebcamPreview3D(isDesktop);
@@ -61,5 +54,4 @@ export const SettingsProvider = ({
   );
 };
 
-// Custom hook to use the context
 export const useSettings = () => useContext(SettingsContext);

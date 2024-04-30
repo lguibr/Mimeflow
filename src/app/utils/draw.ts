@@ -59,6 +59,12 @@ export const drawPose3D = (
 ) => {
   const widthFraction = canvasWidth / 6;
   const heightFraction = canvasHeight / 6;
+  const noiseR = p.noise(p.frameCount / 1000);
+  const noiseG = p.noise((p.frameCount * 2) / 1000);
+  const noiseb = p.noise((p.frameCount * 3) / 1000);
+  const mappedNoiseR = p.map(noiseR, 0, 1, 0, 255);
+  const mappedNoiseG = p.map(noiseG, 0, 1, 0, 255);
+  const mappedNoiseB = p.map(noiseb, 0, 1, 0, 255);
   keypoints?.forEach(({ x, y, z, score }) => {
     const mappedX = p.map(x, -1, 1, -widthFraction, widthFraction);
     const mappedY = p.map(y, -1, 1, -heightFraction, heightFraction);
@@ -67,22 +73,22 @@ export const drawPose3D = (
       p.push();
       p.translate(mappedX, mappedY, mappedZ);
       p.noStroke();
-      p.ambientMaterial(150, 150, 150);
 
       p.lights();
 
-      p.ambientLight(p.random(0, 255), p.random(0, 255), p.random(0, 255));
+      p.ambientMaterial(mappedNoiseB, mappedNoiseG, mappedNoiseR);
+      p.ambientLight(mappedNoiseR, mappedNoiseG, mappedNoiseB);
 
       p.directionalLight(
-        p.random(0, 255),
-        p.random(0, 255),
-        p.random(0, 255),
+        p.random(0, mappedNoiseR),
+        p.random(0, mappedNoiseG),
+        p.random(0, mappedNoiseB),
         p.random(-10, 10),
         p.random(-10, 10),
         p.random(-10, 10)
       );
 
-      p.sphere(canvasHeight / 80);
+      p.sphere(canvasHeight / 100);
       p.pop();
     }
   });
@@ -127,8 +133,6 @@ export const drawRotatingCoordinates = (
   canvasWidth: number,
   canvasHeight: number
 ) => {
-  // Replace with your desired visualization
-  // This example just draws a rotating point
   let angle = p.frameCount * 0.01;
   let x = canvasWidth / 2 + p.cos(angle) * 50;
   let y = canvasHeight / 2 + p.sin(angle) * 50;
@@ -144,10 +148,10 @@ export const drawAxisLines = (
   _canvasWidth: number,
   canvasHeight: number
 ) => {
-  const axisLength = canvasHeight / 3; // Adjust length as needed
+  const axisLength = canvasHeight / 3;
 
   p.push();
-  p.strokeWeight(canvasHeight / 60); // Adjust stroke weight as needed
+  p.strokeWeight(canvasHeight / 60);
 
   // X-axis (Red)
   p.stroke(p.color(255, 0, 0, 150));
@@ -170,23 +174,22 @@ export const draw3DGrid = (
   canvasWidth: number,
   _canvasHeight: number
 ) => {
-  const cubeSize = canvasWidth / 1.5; // Size of each cube
-  const numCubes = 2; // Number of cubes per axis (total cubes = numCubes^3)
-  const noise = p.noise(p.frameCount / 1000); // Use Perlin noise for animation (optional
+  const cubeSize = canvasWidth / 1.5;
+  const numCubes = 2;
+  const noise = p.noise(p.frameCount / 1000);
   const mappedNoise = p.map(noise, 0, 1, 0, 255);
   p.push();
-  p.stroke(p.color(mappedNoise, mappedNoise, mappedNoise, 10)); // White stroke for visibility
-  p.strokeWeight(canvasWidth / 300); // Thin stroke weight
-  p.strokeJoin(p.ROUND); // Round stroke ends
-  p.fill(0, 0, 0, 0); // Black fill
+  p.stroke(p.color(mappedNoise, mappedNoise, mappedNoise, 10));
+  p.strokeWeight(canvasWidth / 300);
+  p.strokeJoin(p.ROUND);
+  p.fill(0, 0, 0, 0);
 
-  // Loop through x, y, z coordinates to create cubes
   for (let x = -numCubes; x < numCubes; x++) {
     for (let y = -numCubes; y < numCubes; y++) {
       for (let z = -numCubes; z < numCubes; z++) {
-        p.translate(x * cubeSize, y * cubeSize, z * cubeSize); // Move to cube position
-        p.box(cubeSize); // Draw the cube
-        p.translate(-x * cubeSize, -y * cubeSize, -z * cubeSize); // Move back to origin
+        p.translate(x * cubeSize, y * cubeSize, z * cubeSize);
+        p.box(cubeSize);
+        p.translate(-x * cubeSize, -y * cubeSize, -z * cubeSize);
       }
     }
   }

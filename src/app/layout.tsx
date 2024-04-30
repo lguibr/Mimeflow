@@ -48,6 +48,9 @@ export default function RootLayout({
   return (
     <html>
       <body>
+        <head>
+          <title>MimeFlow - The Pose Matching Application</title>
+        </head>
         <SettingsProvider>
           <GlobalStyles />
           <GameProvider>

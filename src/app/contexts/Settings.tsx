@@ -2,8 +2,6 @@ import React, { createContext, useContext, useState, useEffect } from "react";
 
 // Define the type for the context value
 type ContextValue = {
-  webcamPreview: boolean;
-  setWebcamPreview: React.Dispatch<React.SetStateAction<boolean>>;
   scorePreview: boolean;
   setScorePreview: React.Dispatch<React.SetStateAction<boolean>>;
   webcamPreview3D: boolean;
@@ -23,8 +21,7 @@ export const SettingsProvider = ({
 }: {
   children: React.ReactNode;
 }) => {
-  const [webcamPreview, setWebcamPreview] = useState(false);
-  const [scorePreview, setScorePreview] = useState(false);
+  const [scorePreview, setScorePreview] = useState(true);
   const [webcamPreview3D, setWebcamPreview3D] = useState(false);
   const [videoPreview3D, setVidePreview3D] = useState(false);
 
@@ -39,16 +36,12 @@ export const SettingsProvider = ({
   useEffect(() => {
     // Set initial values based on screen size
     const isDesktop = checkScreenSize();
-    setWebcamPreview(isDesktop);
-    setScorePreview(isDesktop);
     setWebcamPreview3D(isDesktop);
     setVidePreview3D(isDesktop);
 
     // Handle window resize
     function handleResize() {
       const isDesktop = checkScreenSize();
-      setWebcamPreview(isDesktop);
-      setScorePreview(isDesktop);
       setWebcamPreview3D(isDesktop);
       setVidePreview3D(isDesktop);
     }
@@ -61,8 +54,6 @@ export const SettingsProvider = ({
   return (
     <SettingsContext.Provider
       value={{
-        webcamPreview,
-        setWebcamPreview,
         scorePreview,
         setScorePreview,
         webcamPreview3D,

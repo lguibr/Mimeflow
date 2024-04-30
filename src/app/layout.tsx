@@ -49,7 +49,7 @@ export default function RootLayout({
     <html>
       <body>
         <head>
-          <title>MimeFlow - The Pose Matching Application</title>
+          <title>MimeFlow v0 - The Pose Matching Application</title>
         </head>
         <SettingsProvider>
           <GlobalStyles />

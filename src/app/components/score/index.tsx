@@ -69,16 +69,28 @@ const Container = styled.div`
   align-items: center;
   height: 100vh;
   width: 100vw;
-  padding: 10rem;
+  max-height: 100vh;
+  max-width: 100vw;
+  padding: 0.5rem;
+  gap: 0.5rem;
   flex-direction: column;
-  gap: 20%;
   color: white;
+  box-sizing: border-box;
+  white-space: nowrap; /* Keep the text on a single line */
+  overflow: hidden; /* Hide overflowed text */
+  text-overflow: ellipsis; /* Show ellipsis when text overflows */
+  padding-top: 70px;
 `;
 
 const Hash = styled.p`
   font-size: 1.5rem;
   font-weight: bold;
   color: gold;
+  white-space: nowrap; /* Keep the text on a single line */
+  overflow: hidden; /* Hide overflowed text */
+  text-overflow: ellipsis; /* Show ellipsis when text overflows */
+  padding: 1rem;
+  max-width: 95%;
 `;
 
 const Score = styled.p`

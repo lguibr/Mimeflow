@@ -46,7 +46,6 @@ const App: React.FC = () => {
     scorePreview,
     videoPreview3D: videoposePreview3D,
     webcamPreview3D: webposePreview3D,
-    webcamPreview,
   } = useSettings();
 
   if (!file) {
@@ -74,16 +73,14 @@ const App: React.FC = () => {
           )}
 
           {/* Webcam Video */}
-          {webcamPreview && (
-            <FloatingWindow
-              x={x0}
-              y={y0}
-              width={x30 > y30 ? y30 : x30}
-              height={x30 > y30 ? y30 : x30}
-            >
-              <WebcamPoseTracking />
-            </FloatingWindow>
-          )}
+          <FloatingWindow
+            x={x0}
+            y={y0}
+            width={x30 > y30 ? y30 : x30}
+            height={x30 > y30 ? y30 : x30}
+          >
+            <WebcamPoseTracking />
+          </FloatingWindow>
 
           {/* Webcam Pose 3d */}
           {webposePreview3D && (

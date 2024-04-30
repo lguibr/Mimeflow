@@ -44,11 +44,6 @@ const VideoPoseTracking: React.FC = () => {
           togglePause();
         });
 
-        canvas.touchStarted(() => {
-          if (video) video.elt.paused ? video.elt.play() : video.elt.pause();
-          togglePause();
-        });
-
         if (file) {
           video = p.createVideo(URL.createObjectURL(file));
           video.hide();
@@ -125,12 +120,9 @@ const VideoPoseTracking: React.FC = () => {
   return (
     <>
       <Container>
-        <CanvasContainer ref={p5ContainerRef}></CanvasContainer>
-        {isPaused && (
-          <ResumeButton>
-            <h1>Click to Play</h1>
-          </ResumeButton>
-        )}
+        <CanvasContainer ref={p5ContainerRef}>
+          {isPaused && <ResumeButton>Click to Play</ResumeButton>}
+        </CanvasContainer>
       </Container>
     </>
   );
@@ -173,9 +165,8 @@ const Container = styled.div`
   width: 100vw;
 `;
 
-const ResumeButton = styled.div`
-  z-index: 99999;
-  position: fixed;
+const ResumeButton = styled.h1`
+  position: absolute;
   top: 50%;
   left: 50%;
   transform: translate(-50%, -50%);
@@ -187,6 +178,4 @@ const ResumeButton = styled.div`
   &:hover {
     box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
   }
-  padding: 1rem;
-  background-color: #33333333;
 `;

@@ -45,10 +45,8 @@ const AppBar = () => {
     setScorePreview,
     setVidePreview3D,
     videoPreview3D,
-    setWebcamPreview,
     webcamPreview3D,
     setWebcamPreview3D,
-    webcamPreview,
   } = useSettings();
   const { setHistory } = useGameActions();
   const { setFile } = useFile();
@@ -89,14 +87,6 @@ const AppBar = () => {
             options={[false, true]}
             setSelectedOption={setVidePreview3D}
             selectedOption={videoPreview3D}
-          />
-        </Row>
-        <Row>
-          <h3>Preview Webcam</h3>
-          <Switch
-            options={[false, true]}
-            setSelectedOption={setWebcamPreview}
-            selectedOption={webcamPreview}
           />
         </Row>
       </Dropdown>

@@ -19,7 +19,7 @@ const HomeView: React.FC = () => {
 
   return (
     <Container>
-      <Grid gridSpan={{ xs: [1, 12], sm: [1, 12], md: [2, 11], lg: [3, 10] }}>
+      <Grid gridSpan={{ xs: [1, 13], sm: [1, 13], md: [3, 11], lg: [4, 10] }}>
         <MultiUpload />
       </Grid>
     </Container>

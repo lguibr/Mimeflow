@@ -18,7 +18,7 @@ const defaultConfig: poseDetection.PoseNetEstimationConfig = {
 };
 
 const VideoPoseTracking: React.FC = () => {
-  const { videoNet: net } = useGameViews();
+  const { videoNet: net, isPaused } = useGameViews();
   const { setVideoPoses: setPoses, togglePause } = useGameActions();
 
   const p5ContainerRef = useRef<HTMLDivElement>(null);
@@ -40,6 +40,11 @@ const VideoPoseTracking: React.FC = () => {
           .parent(p5ContainerRef.current!);
 
         canvas.mouseClicked(() => {
+          if (video) video.elt.paused ? video.elt.play() : video.elt.pause();
+          togglePause();
+        });
+
+        canvas.touchStarted(() => {
           if (video) video.elt.paused ? video.elt.play() : video.elt.pause();
           togglePause();
         });
@@ -121,6 +126,11 @@ const VideoPoseTracking: React.FC = () => {
     <>
       <Container>
         <CanvasContainer ref={p5ContainerRef}></CanvasContainer>
+        {isPaused && (
+          <ResumeButton>
+            <h1>Click to Play</h1>
+          </ResumeButton>
+        )}
       </Container>
     </>
   );
@@ -161,4 +171,22 @@ const Container = styled.div`
   position: relative;
   height: 100vh
   width: 100vw;
+`;
+
+const ResumeButton = styled.div`
+  z-index: 99999;
+  position: fixed;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  cursor: pointer;
+  color: white;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  &:hover {
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
+  }
+  padding: 1rem;
+  background-color: #33333333;
 `;

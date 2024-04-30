@@ -1,6 +1,6 @@
 # Mime Flow 🕺💃
 
-Welcome to **Mime Flow**! This versatile pose matching application lets you engage in an interactive way to practice and perfect your poses across various disciplines, from dance to martial arts, and yoga. Powered by cutting-edge technology, it's designed to adapt to your skills, helping you refine your movements with precision.
+Welcome to **Mime Flow**! This alpha version of our versatile pose matching application lets you engage interactively to practice and perfect your poses across various disciplines, from dance to martial arts, and yoga. Powered by cutting-edge technology, it's designed to adapt to your skills, helping you refine your movements with precision.
 
 ### Origin Story:
 
@@ -11,6 +11,10 @@ Mime Flow began as an innovation to overcome the limitations of traditional syst
 - **Universal Pose Matching:** Leverages TensorFlow.js with BlazePose for real-time feedback on a wide variety of physical activities. 🌟
 - **Progress Tracking:** Every move is scored based on its accuracy, helping you improve by understanding your performance in real time. 📊
 - **Seamless User Experience:** React and Next.js provide a fluid, responsive interface that enhances your interaction without complexity. 🌐
+
+### Alpha Version Note:
+
+Please note that this is the initial alpha version of Mime Flow. We encourage users to report any issues and contribute to the development. Your feedback is invaluable as we continue to enhance and expand Mime Flow's capabilities.
 
 ### Getting Started:
 
@@ -48,7 +52,7 @@ Set up Mime Flow on your local system with these simple steps:
 
 ### Contributing:
 
-Your contributions can help make Mime Flow even better! Fork the project, tweak it, and submit a pull request. We appreciate your input and engagement! 🌟
+Mime Flow is still in its early stages, and we are open to all contributions! If you have ideas on how to improve it, please fork the project, make your changes, and submit a pull request. Don't hesitate to create issues if you encounter any problems. Your involvement truly makes a difference!
 
 ### License:
 

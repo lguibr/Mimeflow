@@ -7,8 +7,8 @@ const Logo: React.FC<{
 }> = ({ width, height }) => {
   return (
     <svg
-      width={width ? width : "136.57582mm"}
-      height={height ? height : "185.89247mm"}
+      width={width ? width : "100px"}
+      height={height ? height : "100px"}
       viewBox="0 0 136.57582 185.89247"
       version="1.1"
       id="svg5"

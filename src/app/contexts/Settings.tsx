@@ -27,11 +27,14 @@ export const SettingsProvider = ({
   const [scorePreview, setScorePreview] = useState(false);
   const [webcamPreview3D, setWebcamPreview3D] = useState(false);
   const [videoPreview3D, setVidePreview3D] = useState(false);
-  
-  const [model, setModel] = useState<"lite" | "full" | "heavy">("heavy");
+
+  const checkScreenSize = () =>
+    typeof window !== "undefined" && window.innerWidth >= 1024;
+  const [model, setModel] = useState<"lite" | "full" | "heavy">(
+    checkScreenSize() ? "heavy" : "lite"
+  );
 
   // Function to determine if the screen is desktop size
-  const checkScreenSize = () => window.innerWidth >= 1024;
 
   useEffect(() => {
     // Set initial values based on screen size
@@ -49,10 +52,11 @@ export const SettingsProvider = ({
       setWebcamPreview3D(isDesktop);
       setVidePreview3D(isDesktop);
     }
+    console.log({ model });
 
     window.addEventListener("resize", handleResize);
     return () => window.removeEventListener("resize", handleResize);
-  }, []);
+  }, [model]);
 
   return (
     <SettingsContext.Provider

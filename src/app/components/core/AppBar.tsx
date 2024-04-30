@@ -19,10 +19,16 @@ const AppBarContainer = styled.div`
   display: flex;
   align-items: center;
   padding: 0 20px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
   z-index: 1000;
   display: flex;
   justify-content: space-between;
+  max-width: 100vw;
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.12), 0 1px 2px rgba(0, 0, 0, 0.24);
+  transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+  &:hover {
+    box-shadow: 0 14px 28px rgba(0, 0, 0, 0.25), 0 10px 10px rgba(0, 0, 0, 0.22);
+  }
 `;
 
 const AppBarTitle = styled.h1`

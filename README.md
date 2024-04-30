@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Mime Flow 🕺💃
 
-## Getting Started
+Welcome to **Mime Flow**! This versatile pose matching application lets you engage in an interactive way to practice and perfect your poses across various disciplines, from dance to martial arts, and yoga. Powered by cutting-edge technology, it's designed to adapt to your skills, helping you refine your movements with precision.
 
-First, run the development server:
+### Origin Story:
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+Mime Flow began as an innovation to overcome the limitations of traditional systems like Kinect and Just Dance, which were constrained by outdated games and music. Inspired by the need for a more adaptable and modern approach to pose matching, this project evolved from enhancing dance sessions to supporting a broad spectrum of physical activities.
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+### Key Features:
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+- **Universal Pose Matching:** Leverages TensorFlow.js with BlazePose for real-time feedback on a wide variety of physical activities. 🌟
+- **Progress Tracking:** Every move is scored based on its accuracy, helping you improve by understanding your performance in real time. 📊
+- **Seamless User Experience:** React and Next.js provide a fluid, responsive interface that enhances your interaction without complexity. 🌐
 
-This project uses [`next/font`](https://nextjs.org/docs/basic-features/font-optimization) to automatically optimize and load Inter, a custom Google Font.
+### Getting Started:
 
-## Learn More
+Set up Mime Flow on your local system with these simple steps:
 
-To learn more about Next.js, take a look at the following resources:
+1. **Clone the repository:**
+   ```
+   git clone https://github.com/lguibr/Mimeflow.git
+   ```
+2. **Navigate to the project directory:**
+   ```
+   cd Mimeflow
+   ```
+3. **Install dependencies:**
+   ```
+   yarn
+   ```
+4. **Launch the development server:**
+   ```
+   yarn dev
+   ```
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+### How to Play:
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js/) - your feedback and contributions are welcome!
+1. **Start at the Homepage:** Drag and drop a video file to begin. Supported formats include commonly used video types.
+2. **Automatic Redirection:** Once the file is loaded, you'll be redirected to the playback page.
+3. **Track and Score:** As you mimic the poses in the video, the system tracks each pose's accuracy, scoring them from 0 to 1.
+4. **Final Score:** After the video ends, you'll automatically be taken to the score page to view your cumulative score, which is the sum of all frame scores throughout the session.
 
-## Deploy on Vercel
+### Technologies Used:
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+- **Frontend:** React, Next.js, Styled Components
+- **Pose Estimation:** TensorFlow.js, BlazePose
+- **State Management:** React Context API
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/deployment) for more details.
+### Contributing:
+
+Your contributions can help make Mime Flow even better! Fork the project, tweak it, and submit a pull request. We appreciate your input and engagement! 🌟
+
+### License:
+
+Mime Flow is distributed under the MIT License. See the `LICENSE` file for more information.

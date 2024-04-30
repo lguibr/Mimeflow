@@ -108,6 +108,7 @@ const GameProvider: React.FC<{
       const detectorConfig: poseDetection.BlazePoseMediaPipeModelConfig = {
         runtime: "mediapipe",
         modelType: "lite",
+
         solutionPath: `https://cdn.jsdelivr.net/npm/@mediapipe/pose@${mpPose.VERSION}`,
       };
 

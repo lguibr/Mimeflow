@@ -19,10 +19,9 @@ const PoseTracking: React.FC = () => {
   const p5InstanceRef = useRef<p5>();
 
   useEffect(() => {
+    let video: p5.Element;
+    let scaleRatio = 1;
     const sketch = (p: p5) => {
-      let video: p5.Element;
-      let scaleRatio = 1;
-
       p.setup = () => {
         const { width, height } =
           p5ContainerRef.current!.getBoundingClientRect();
@@ -74,6 +73,8 @@ const PoseTracking: React.FC = () => {
 
     return () => {
       p5InstanceRef.current?.remove();
+      video.elt.remove();
+      video.remove();
     };
   }, [net, setPoses]);
 

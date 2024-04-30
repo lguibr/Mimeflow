@@ -96,13 +96,12 @@ const VideoPoseTracking: React.FC = () => {
     };
 
     p5InstanceRef.current = new p5(sketch);
-  }, [file, net, push, setPoses, togglePause]);
-
-  useEffect(() => {
     return () => {
+      video.elt.remove();
+      video.remove();
       p5InstanceRef.current?.remove();
     };
-  }, []);
+  }, [file, net, push, setPoses, togglePause]);
 
   if (!file) {
     push("/");

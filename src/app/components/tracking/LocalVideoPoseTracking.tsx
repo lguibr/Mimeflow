@@ -50,7 +50,12 @@ const VideoPoseTracking: React.FC = () => {
             typeof window !== "undefined" && window.innerWidth >= 1024;
 
           p.frameRate(isDesktop() ? 60 : 30);
-          if (video) video.elt.addEventListener("ended", () => push("/score"));
+          if (video) {
+            video.elt.addEventListener("ended", () => {
+              console.log("video ended one second before");
+              push("/score");
+            });
+          }
         }
       };
 
@@ -88,7 +93,11 @@ const VideoPoseTracking: React.FC = () => {
             draw2DPose(p, detectedPoses, scaleFactor, x, y);
           }
 
-          if (video.elt.duration - 0.5 <= video.elt.currentTime) {
+          if (
+            video.elt.duration - 1 <= video.elt.currentTime ||
+            video.duration() - 1 <= video.time()
+          ) {
+            console.log("video ended one second before");
             push("/score");
           }
         }

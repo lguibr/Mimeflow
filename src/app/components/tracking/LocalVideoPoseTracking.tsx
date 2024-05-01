@@ -45,6 +45,7 @@ const VideoPoseTracking: React.FC = () => {
           video.hide();
           video.noLoop();
           video.elt.loop = false;
+          (video.elt as HTMLVideoElement).loop = false;
           p.frameRate(60);
 
           if (video) video.elt.addEventListener("ended", () => push("/score"));
@@ -80,10 +81,13 @@ const VideoPoseTracking: React.FC = () => {
 
           p.clear();
           p.image(video, x, y, displayWidth, displayHeight);
-
           if (detectedPoses) {
             setPoses(detectedPoses);
             draw2DPose(p, detectedPoses, scaleFactor, x, y);
+          }
+
+          if (video.elt.duration - 0.5 <= video.elt.currentTime) {
+            push("/score");
           }
         }
       };

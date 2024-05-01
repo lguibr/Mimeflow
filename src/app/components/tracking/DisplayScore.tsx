@@ -3,6 +3,9 @@ import { Doughnut } from "react-chartjs-2";
 import styled from "styled-components";
 import { useGameViews } from "@/app/contexts/Game";
 import { Chart, ArcElement, Tooltip, Legend } from "chart.js";
+import FloatingWindow from "./FloatingWindow";
+import usePercentageToPixels from "@/app/hooks/usePercentageToPixels";
+import { useSettings } from "@/app/contexts/Settings";
 
 Chart.register(ArcElement, Tooltip, Legend);
 
@@ -48,7 +51,8 @@ const SubInfoText = styled.div`
 
 const SimilarityDisplay: React.FC = () => {
   const { score, similarity } = useGameViews();
-
+  const getPixels = usePercentageToPixels();
+  const { scorePreview } = useSettings();
   const data = {
     datasets: [
       {
@@ -74,13 +78,26 @@ const SimilarityDisplay: React.FC = () => {
       },
     },
   };
+  const [x0, y0] = getPixels(0, 0);
+  const [x100, y100] = getPixels(100, 100);
+  const [x30, y30] = getPixels(30, 30);
 
+  if (!scorePreview) return null;
   return (
-    <Container>
-      <Doughnut data={data} options={options} />
-      <InfoText color={getColor(similarity)}>{similarity.toFixed(2)}</InfoText>
-      <SubInfoText>Score : {score.toFixed(2)}</SubInfoText>
-    </Container>
+    <FloatingWindow
+      x={x0}
+      y={y100}
+      width={x30 > y30 ? y30 : x30}
+      height={x30 > y30 ? y30 : x30}
+    >
+      <Container>
+        <Doughnut data={data} options={options} />
+        <InfoText color={getColor(similarity)}>
+          {similarity.toFixed(2)}
+        </InfoText>
+        <SubInfoText>Score : {score.toFixed(2)}</SubInfoText>
+      </Container>
+    </FloatingWindow>
   );
 };
 

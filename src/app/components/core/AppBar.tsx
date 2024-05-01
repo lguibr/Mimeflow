@@ -1,8 +1,6 @@
 import React from "react";
 import styled from "styled-components";
 import Logo from "./Logo";
-import Dropdown from "./Dropdown";
-import Switch from "./Switch";
 import { useSettings } from "@/app/contexts/Settings";
 import Link from "next/link";
 import { useGameActions } from "@/app/contexts/Game";
@@ -40,14 +38,6 @@ const AppBarTitle = styled.h1`
 `;
 
 const AppBar = () => {
-  const {
-    scorePreview,
-    setScorePreview,
-    setVidePreview3D,
-    videoPreview3D,
-    webcamPreview3D,
-    setWebcamPreview3D,
-  } = useSettings();
   const { setHistory } = useGameActions();
   const { setFile } = useFile();
   const resetGame = () => {
@@ -61,34 +51,8 @@ const AppBar = () => {
         <Link href={"/"}>
           <Logo width="30px" height="30px" />
         </Link>
-        <p>Mime Flow</p>
+        <h1>Mime Flow</h1>
       </AppBarTitle>
-      <Dropdown>
-        <Row>
-          <h3>Preview Score</h3>
-          <Switch
-            options={[false, true]}
-            setSelectedOption={setScorePreview}
-            selectedOption={scorePreview}
-          />
-        </Row>
-        <Row>
-          <h3>3D Webcam Pose</h3>
-          <Switch
-            options={[false, true]}
-            setSelectedOption={setWebcamPreview3D}
-            selectedOption={webcamPreview3D}
-          />
-        </Row>
-        <Row>
-          <h3>3D Video Pose</h3>
-          <Switch
-            options={[false, true]}
-            setSelectedOption={setVidePreview3D}
-            selectedOption={videoPreview3D}
-          />
-        </Row>
-      </Dropdown>
     </AppBarContainer>
   );
 };

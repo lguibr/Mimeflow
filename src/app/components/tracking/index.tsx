@@ -4,14 +4,11 @@ import "@tensorflow/tfjs-backend-webgl";
 
 import styled from "styled-components";
 import dynamic from "next/dynamic";
+
+import ScoreGraphs from "@/app/components/tracking/DisplayScore";
+import { useGameViews } from "@/app/contexts/Game";
 import { useFile } from "@/app/contexts/File";
 import { useRouter } from "next/navigation";
-import FloatingWindow from "@/app/components/tracking/FloatingWindow";
-import usePercentageToPixels from "@/app/hooks/usePercentageToPixels";
-import ScoreGraphs from "./DisplayScore";
-import { useGameViews } from "@/app/contexts/Game";
-import { useSettings } from "@/app/contexts/Settings";
-import VideoPoseTracking from "@/app/components/tracking/LocalVideoPoseTracking";
 
 const Pose3DViewer = dynamic(
   () => import("@/app/components/tracking/Pose3DViewer"),
@@ -34,19 +31,9 @@ const LocalVideoPoseTracking = dynamic(
 );
 
 const App: React.FC = () => {
-  const getPixels = usePercentageToPixels();
   const { loaded } = useGameViews();
   const { file } = useFile();
   const { push } = useRouter();
-  const [x0, y0] = getPixels(0, 0);
-  const [x100, y100] = getPixels(100, 100);
-  const [x30, y30] = getPixels(30, 30);
-
-  const {
-    scorePreview,
-    videoPreview3D: videoposePreview3D,
-    webcamPreview3D: webposePreview3D,
-  } = useSettings();
 
   if (!file) {
     push("/");
@@ -57,54 +44,11 @@ const App: React.FC = () => {
     <Container>
       {loaded && window !== null && (
         <>
-          {/* Video on full background */}
           <LocalVideoPoseTracking />
-          {/* Video Pose 3d */}
-
-          {videoposePreview3D && (
-            <FloatingWindow
-              x={x100}
-              y={y100}
-              width={x30 > y30 ? y30 : x30}
-              height={x30 > y30 ? y30 : x30}
-            >
-              <Pose3DViewer type="video" />
-            </FloatingWindow>
-          )}
-
-          {/* Webcam Video */}
-          <FloatingWindow
-            x={x0}
-            y={y0}
-            width={x30 > y30 ? y30 : x30}
-            height={x30 > y30 ? y30 : x30}
-          >
-            <WebcamPoseTracking />
-          </FloatingWindow>
-
-          {/* Webcam Pose 3d */}
-          {webposePreview3D && (
-            <FloatingWindow
-              x={x100}
-              y={y0}
-              width={x30 > y30 ? y30 : x30}
-              height={x30 > y30 ? y30 : x30}
-            >
-              {<Pose3DViewer type="webcam" />}
-            </FloatingWindow>
-          )}
-
-          {/* Similarity Score */}
-          {scorePreview && (
-            <FloatingWindow
-              x={x0}
-              y={y100}
-              width={x30 > y30 ? y30 : x30}
-              height={x30 > y30 ? y30 : x30}
-            >
-              <ScoreGraphs />
-            </FloatingWindow>
-          )}
+          <Pose3DViewer type="webcam" />
+          <Pose3DViewer type="video" />
+          <WebcamPoseTracking />
+          <ScoreGraphs />
         </>
       )}
     </Container>

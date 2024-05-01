@@ -9,6 +9,9 @@ import {
   drawPose3D,
   drawRotatingCoordinates,
 } from "@/app/utils/draw";
+import usePercentageToPixels from "@/app/hooks/usePercentageToPixels";
+import FloatingWindow from "./FloatingWindow";
+import { useSettings } from "@/app/contexts/Settings";
 
 interface Pose3DViewerProps {
   type: "webcam" | "video";
@@ -23,6 +26,11 @@ const Pose3DViewer: React.FC<Pose3DViewerProps> = ({ type }) => {
   const points = useRef<poseDetection.Keypoint[]>(
     type === "webcam" ? webcamPoints3d : videoPoints3d
   );
+  const getPixels = usePercentageToPixels();
+  const [x0, y0] = getPixels(0, 0);
+  const [x100, y100] = getPixels(100, 100);
+  const [x30, y30] = getPixels(30, 30);
+  const { videoPreview3D, webcamPreview3D } = useSettings();
 
   useEffect(() => {
     points.current = keypoints;
@@ -70,19 +78,34 @@ const Pose3DViewer: React.FC<Pose3DViewerProps> = ({ type }) => {
             // Draw rotating coordinates when no keypoints
             drawRotatingCoordinates(p, canvasWidth, canvasHeight);
           }
-
           drawAxisLines(p, canvasWidth, canvasHeight);
-          draw3DGrid(p, canvasWidth, canvasHeight); // Add the grid drawing
+          draw3DGrid(p, canvasWidth, canvasHeight);
         };
       };
 
       p5InstanceRef.current = new p5(sketch);
     }
+  }, [type]);
 
-    return () => p5InstanceRef.current?.remove();
-  }, []);
-
-  return <CanvasContainer ref={p5ContainerRef} />;
+  return webcamPreview3D && type === "webcam" ? (
+    <FloatingWindow
+      x={x100}
+      y={y0}
+      width={x30 > y30 ? y30 : x30}
+      height={x30 > y30 ? y30 : x30}
+    >
+      <CanvasContainer ref={p5ContainerRef} />;
+    </FloatingWindow>
+  ) : videoPreview3D && type === "video" ? (
+    <FloatingWindow
+      x={x100}
+      y={y100}
+      width={x30 > y30 ? y30 : x30}
+      height={x30 > y30 ? y30 : x30}
+    >
+      <CanvasContainer ref={p5ContainerRef} />;
+    </FloatingWindow>
+  ) : null;
 };
 
 export default Pose3DViewer;

@@ -27,15 +27,6 @@ export const SettingsProvider = ({
     const isDesktop = checkScreenSize();
     setWebcamPreview3D(isDesktop);
     setVidePreview3D(isDesktop);
-
-    function handleResize() {
-      const isDesktop = checkScreenSize();
-      setWebcamPreview3D(isDesktop);
-      setVidePreview3D(isDesktop);
-    }
-
-    window.addEventListener("resize", handleResize);
-    return () => window.removeEventListener("resize", handleResize);
   }, []);
 
   return (

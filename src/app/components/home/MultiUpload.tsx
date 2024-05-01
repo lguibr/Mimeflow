@@ -15,15 +15,16 @@ type Props = {
 
 const DragDrop = styled.div<Props>`
   border: ${({ dragging }) =>
-    dragging ? "3px dashed #00f" : "3px dashed #aaa"};
+    dragging ? ".5rem dashed #00f" : ".5rem dashed #aaa"};
   height: 50%;
   width: 100%;
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
+  padding: 6rem;
   font-size: 16px;
-  border-radius: 10px;
+  border-radius: 5rem;
   cursor: pointer;
   justify-content: center;
   align-items: center;

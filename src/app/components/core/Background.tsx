@@ -55,6 +55,10 @@ const Background: React.FC = () => {
         cameraX = p.map(p.mouseX / 2, 0, p.width, -p.PI / 2, p.PI / 2);
         cameraY = p.map(p.mouseY / 2, 0, p.height, -p.PI / 2, p.PI / 2);
       };
+      p.touchMoved = () => {
+        cameraX = p.map(p.mouseX / 2, 0, p.width, -p.PI / 2, p.PI / 2);
+        cameraY = p.map(p.mouseY / 2, 0, p.height, -p.PI / 2, p.PI / 2);
+      };
 
       p.windowResized = () => {
         p.resizeCanvas(p.windowWidth, p.windowHeight);

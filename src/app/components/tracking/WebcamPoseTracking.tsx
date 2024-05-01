@@ -9,6 +9,8 @@ import styled from "styled-components";
 
 import { draw2DPose } from "@/app/utils/draw";
 import { useGameActions, useGameViews } from "@/app/contexts/Game";
+import usePercentageToPixels from "@/app/hooks/usePercentageToPixels";
+import FloatingWindow from "./FloatingWindow";
 
 const PoseTracking: React.FC = () => {
   const { webcamNet: net } = useGameViews();
@@ -63,7 +65,6 @@ const PoseTracking: React.FC = () => {
           if (detectedPoses) {
             setPoses(detectedPoses);
             draw2DPose(p, detectedPoses, scaleRatio, x, y);
-            if (detectedPoses.length > 0) console.log(detectedPoses[0]);
           }
         }
       };
@@ -77,20 +78,31 @@ const PoseTracking: React.FC = () => {
       video.remove();
     };
   }, [net, setPoses]);
+  const getPixels = usePercentageToPixels();
 
+  const [x0, y0] = getPixels(0, 0);
+  const [x100, y100] = getPixels(100, 100);
+  const [x30, y30] = getPixels(30, 30);
   return (
-    <Container>
-      <Webcam
-        ref={webcamRef}
-        style={{
-          position: "absolute",
-          right: 0,
-          display: "none",
-          borderRadius: "50%",
-        }}
-      />
-      <CanvasContainer ref={p5ContainerRef} />
-    </Container>
+    <FloatingWindow
+      x={x0}
+      y={y0}
+      width={x30 > y30 ? y30 : x30}
+      height={x30 > y30 ? y30 : x30}
+    >
+      <Container>
+        <Webcam
+          ref={webcamRef}
+          style={{
+            position: "absolute",
+            right: 0,
+            display: "none",
+            borderRadius: "50%",
+          }}
+        />
+        <CanvasContainer ref={p5ContainerRef} />
+      </Container>
+    </FloatingWindow>
   );
 };
 

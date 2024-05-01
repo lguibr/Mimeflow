@@ -8,7 +8,7 @@ import ScoreGraph from "@/app/components/score/ScoreGraph";
 import Button from "@/app/components/core/Button";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/app/services/dexie";
-import ReplayIcon from "../core/replay";
+import ReplayIcon from "../core/Replay";
 const ScoreView: React.FC = () => {
   const { push } = useRouter();
   const { setFile, hash } = useFile();

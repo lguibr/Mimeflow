@@ -24,11 +24,6 @@ const VideoPoseTracking: React.FC = () => {
   const { file } = useFile();
 
   useEffect(() => {
-    // add a event listener to thhe event video finished
-    const video = document.createElement("video");
-  }, []);
-
-  useEffect(() => {
     let video: p5.Element;
     let scaleFactor = 1;
 
@@ -47,6 +42,8 @@ const VideoPoseTracking: React.FC = () => {
 
         if (file) {
           video = p.createVideo(URL.createObjectURL(file));
+          video.elt.noLoop();
+          video.elt.loop = false;
           video.hide();
           p.frameRate(60);
 

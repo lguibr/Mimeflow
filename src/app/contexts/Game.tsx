@@ -83,7 +83,7 @@ const GameProvider: React.FC<{
           5,
           0.7
         );
-        setSimilarityState(sigmoidedSimilarity);
+        !isPaused && setSimilarityState(sigmoidedSimilarity);
       }
     }
   }, [isPaused, videoPoints3d, webcamPoints3d]);

@@ -56,7 +56,7 @@ const VideoPoseTracking: React.FC = () => {
           p.frameRate(isDesktop() ? 60 : 30);
           if (video) {
             video.elt.addEventListener("ended", () => {
-              console.log("video ended one second before");
+              togglePause(true);
               push("/score");
             });
           }
@@ -98,10 +98,10 @@ const VideoPoseTracking: React.FC = () => {
           }
 
           if (
-            video.elt.duration - 1 <= video.elt.currentTime ||
-            video.duration() - 1 <= video.time()
+            video.elt.duration - 0.2 <= video.elt.currentTime ||
+            video.duration() - 0.2 <= video.time()
           ) {
-            console.log("video ended one second before");
+            togglePause(true);
             push("/score");
           }
         }

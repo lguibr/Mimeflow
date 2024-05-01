@@ -6,10 +6,10 @@ import styled from "styled-components";
 import dynamic from "next/dynamic";
 
 import ScoreGraphs from "@/app/components/tracking/DisplayScore";
-import { useGameViews } from "@/app/contexts/Game";
+import { useGameActions, useGameViews } from "@/app/contexts/Game";
 import { useFile } from "@/app/contexts/File";
 import { useRouter } from "next/navigation";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 
 const Pose3DViewer = dynamic(
   () => import("@/app/components/tracking/Pose3DViewer"),
@@ -32,20 +32,28 @@ const LocalVideoPoseTracking = dynamic(
 );
 
 const App: React.FC = () => {
+  const { setScore, setHistory, setVideoPoses, setWebcamPoses } =
+    useGameActions();
   const { loaded } = useGameViews();
   const { file } = useFile();
   const { push } = useRouter();
 
-  useEffect(() => {
-    if (!file) {
-      push("/");
-    }
-  }, [file, push]);
+  const resetGame = useCallback(() => {
+    setScore(0);
+    setHistory([]);
+    setVideoPoses([]);
+    setWebcamPoses([]);
+  }, [setHistory, setScore, setVideoPoses, setWebcamPoses]);
 
-  if (!file) return null;
+  useEffect(() => {
+    if (!file) push("/");
+    return () => resetGame();
+  }, [file, push, resetGame]);
+
+  if (!file || window === null) return null;
   return (
     <Container>
-      {loaded && window !== null && (
+      {loaded && (
         <>
           <LocalVideoPoseTracking />
           <Pose3DViewer type="webcam" />

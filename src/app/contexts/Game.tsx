@@ -40,6 +40,7 @@ interface GameActions {
   setWebcamPoses: React.Dispatch<React.SetStateAction<poseDetection.Pose[]>>;
   setVideoPoses: React.Dispatch<React.SetStateAction<poseDetection.Pose[]>>;
   setHistory: React.Dispatch<React.SetStateAction<number[]>>;
+  setScore: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const GameStateContext = createContext<GameState | undefined>(undefined);
@@ -145,6 +146,7 @@ const GameProvider: React.FC<{
       setWebcamPoses,
       setVideoPoses,
       setHistory,
+      setScore,
     }),
     [togglePause]
   );

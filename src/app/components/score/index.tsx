@@ -34,7 +34,7 @@ const ScoreView: React.FC = () => {
   };
   return (
     <Container>
-      {!scoreForCurrentHash?.score && scoreForCurrentHash?.score < score ? (
+      {!scoreForCurrentHash?.score || scoreForCurrentHash?.score < score ? (
         <Record>
           <Block>
             <h1>Congratulations!</h1>

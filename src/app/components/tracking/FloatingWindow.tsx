@@ -9,15 +9,21 @@ interface DraggableStyleProps {
   height: number;
 }
 
-const DraggableWindow = styled.div.attrs<DraggableStyleProps>((props) => ({
+const DraggableWindow = styled.div.attrs<{
+  x: number;
+  y: number;
+  $zIndex: number;
+  width: number;
+  height: number;
+}>((props) => ({
   style: {
     left: `${props.x}px`,
     top: `${props.y}px`,
-    zIndex: props.zIndex,
+    zIndex: props.$zIndex,
     width: `${props.width}px`,
     height: `${props.height}px`,
   },
-}))<DraggableStyleProps>`
+}))<{ x: number; y: number; $zIndex: number; width: number; height: number }>`
   position: fixed;
   cursor: grab;
   display: flex;
@@ -42,7 +48,7 @@ interface Position {
 const AppBarHeight = 100; // Define the height of the AppBar
 
 const FloatingWindow: React.FC<FloatingWindowProps> = ({
-  zIndex = 9,
+  zIndex = 999,
   children,
   x = 0,
   y = AppBarHeight, // Set initial y to AppBarHeight to start below the AppBar
@@ -117,7 +123,7 @@ const FloatingWindow: React.FC<FloatingWindowProps> = ({
     <DraggableWindow
       x={position.x}
       y={position.y}
-      zIndex={zIndex}
+      $zIndex={zIndex}
       width={width}
       height={height}
       onMouseDown={onMouseDown}

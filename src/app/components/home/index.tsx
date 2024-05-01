@@ -5,14 +5,18 @@ import MultiUpload from "@/app/components/home/MultiUpload";
 import { useFile } from "@/app/contexts/File";
 import styled from "styled-components";
 import Grid from "@/app/components/core/Grid";
+import { useEffect } from "react";
 
 const HomeView: React.FC = () => {
   const { file } = useFile();
   const { push } = useRouter();
 
-  if (file) {
-    push("/tracking");
-  }
+  useEffect(() => {
+    if (file) {
+      push("/tracking");
+    }
+  }, [file, push]);
+
   if (typeof window === "undefined") {
     return null;
   }

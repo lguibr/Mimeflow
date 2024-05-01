@@ -13,9 +13,9 @@ type Props = {
   dragging: boolean;
 };
 
-const DragDrop = styled.div<Props>`
-  border: ${({ dragging }) =>
-    dragging ? ".5rem dashed #00f" : ".5rem dashed #aaa"};
+const DragDrop = styled.div<{ $dragging: boolean }>`
+  border: ${({ $dragging }) =>
+    $dragging ? ".5rem dashed #00f" : ".5rem dashed #aaa"};
   height: 50%;
   width: 100%;
   display: flex;
@@ -109,7 +109,7 @@ const VideoUpload: React.FC = () => {
       onDragOver={handleDragOver}
       onDragLeave={handleDragLeave}
       onDrop={handleDrop}
-      dragging={dragging}
+      $dragging={dragging}
     >
       {file ? (
         <p>File ready: {file.name}</p>

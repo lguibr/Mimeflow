@@ -17,12 +17,7 @@ const CoreProvider = dynamic(
   }
 );
 
-export default function RootLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
-  const GlobalStyles = createGlobalStyle`
+const GlobalStyles = createGlobalStyle`
   *,
   *::before,
   *::after {
@@ -49,12 +44,17 @@ export default function RootLayout({
   }
 `;
 
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html>
+      <head>
+        <title>MimeFlow v0 - The Pose Matching Application</title>
+      </head>
       <body>
-        <head>
-          <title>MimeFlow v0 - The Pose Matching Application</title>
-        </head>
         <StyledComponentsRegistry>
           <SettingsProvider>
             <GlobalStyles />

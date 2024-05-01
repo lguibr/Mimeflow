@@ -9,6 +9,7 @@ import ScoreGraphs from "@/app/components/tracking/DisplayScore";
 import { useGameViews } from "@/app/contexts/Game";
 import { useFile } from "@/app/contexts/File";
 import { useRouter } from "next/navigation";
+import { useEffect } from "react";
 
 const Pose3DViewer = dynamic(
   () => import("@/app/components/tracking/Pose3DViewer"),
@@ -35,11 +36,13 @@ const App: React.FC = () => {
   const { file } = useFile();
   const { push } = useRouter();
 
-  if (!file) {
-    push("/");
-    return null;
-  }
+  useEffect(() => {
+    if (!file) {
+      push("/");
+    }
+  }, [file, push]);
 
+  if (!file) return null;
   return (
     <Container>
       {loaded && window !== null && (

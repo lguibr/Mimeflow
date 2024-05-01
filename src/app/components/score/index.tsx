@@ -9,6 +9,7 @@ import Button from "@/app/components/core/Button";
 import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/app/services/dexie";
 import ReplayIcon from "../core/Replay";
+import { useEffect } from "react";
 const ScoreView: React.FC = () => {
   const { push } = useRouter();
   const { setFile, hash } = useFile();
@@ -20,18 +21,23 @@ const ScoreView: React.FC = () => {
   if (!scoreForCurrentHash || scoreForCurrentHash?.score < score) {
     db.leaderBoard.put({ hash, score });
   }
+  useEffect(() => {
+    if (!score) {
+      setFile(null);
+      push("/");
+    }
+  }, [push, score, setFile]);
 
-  if (!score || typeof window === "undefined") {
-    setFile(null);
-    push("/");
-    return null;
-  }
   const resetGame = () => {
     setFile(null);
     setHistory([]);
     togglePause();
     push("/");
   };
+  if (!score) {
+    return null;
+  }
+
   return (
     <Container>
       {!scoreForCurrentHash?.score || scoreForCurrentHash?.score < score ? (

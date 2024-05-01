@@ -15,10 +15,7 @@ import * as tf from "@tensorflow/tfjs-core";
 import * as poseDetection from "@tensorflow-models/pose-detection";
 import * as mpPose from "@mediapipe/pose";
 import * as tfjsWasm from "@tensorflow/tfjs-backend-wasm";
-import {
-  PoseDetector,
-  PoseNetEstimationConfig,
-} from "@tensorflow-models/pose-detection";
+import { PoseDetector } from "@tensorflow-models/pose-detection";
 
 import {
   IKeypoint3D,

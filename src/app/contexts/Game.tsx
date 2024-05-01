@@ -36,7 +36,7 @@ interface GameState {
 }
 
 interface GameActions {
-  togglePause: () => void;
+  togglePause: (value?: boolean) => void;
   setWebcamPoses: React.Dispatch<React.SetStateAction<poseDetection.Pose[]>>;
   setVideoPoses: React.Dispatch<React.SetStateAction<poseDetection.Pose[]>>;
   setHistory: React.Dispatch<React.SetStateAction<number[]>>;
@@ -135,8 +135,8 @@ const GameProvider: React.FC<{
     !isPaused && setHistory((prev) => [...prev, score]);
   }, [isPaused, score]);
 
-  const togglePause = useCallback(() => {
-    setIsPaused((prevIsPaused) => !prevIsPaused);
+  const togglePause = useCallback((value?: boolean) => {
+    setIsPaused((prevIsPaused) => (value ? value : !prevIsPaused));
   }, []);
 
   const actions = useMemo(

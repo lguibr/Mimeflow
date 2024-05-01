@@ -31,7 +31,7 @@ const ScoreView: React.FC = () => {
   const resetGame = () => {
     setFile(null);
     setHistory([]);
-    togglePause();
+    togglePause(true);
     push("/");
   };
   if (!score) {

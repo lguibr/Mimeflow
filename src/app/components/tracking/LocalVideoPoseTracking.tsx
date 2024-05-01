@@ -37,7 +37,7 @@ const VideoPoseTracking: React.FC = () => {
 
         canvas.mouseClicked(() => {
           if (video) video.elt.paused ? video.elt.play() : video.elt.pause();
-          togglePause();
+          togglePause(!video.elt.paused);
         });
 
         if (file) {

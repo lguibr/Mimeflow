@@ -44,7 +44,11 @@ const VideoPoseTracking: React.FC = () => {
           video = p.createVideo(URL.createObjectURL(file));
           video.hide();
           video.noLoop();
+          video.autoplay(false);
           video.elt.loop = false;
+          video.elt.autoplay = false;
+          video.elt.autostart = false;
+
           (video.elt as HTMLVideoElement).loop = false;
           const isDesktop = () =>
             typeof window !== "undefined" && window.innerWidth >= 1024;

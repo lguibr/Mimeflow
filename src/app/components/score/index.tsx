@@ -14,7 +14,7 @@ const ScoreView: React.FC = () => {
   const { push } = useRouter();
   const { setFile, hash } = useFile();
   const { score } = useGameViews();
-  const { togglePause, setHistory } = useGameActions();
+  const { togglePause, setHistory, setScore } = useGameActions();
   const leaderBoard = useLiveQuery(() => db.leaderBoard.toArray());
   const scoreForCurrentHash = leaderBoard?.find((entry) => entry.hash === hash);
 
@@ -31,6 +31,7 @@ const ScoreView: React.FC = () => {
   const resetGame = () => {
     setFile(null);
     setHistory([]);
+    setScore(0);
     togglePause(true);
     push("/");
   };

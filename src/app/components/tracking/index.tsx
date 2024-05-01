@@ -32,23 +32,20 @@ const LocalVideoPoseTracking = dynamic(
 );
 
 const App: React.FC = () => {
-  const { setScore, setHistory, setVideoPoses, setWebcamPoses } =
-    useGameActions();
+  const { setVideoPoses, setWebcamPoses } = useGameActions();
   const { loaded } = useGameViews();
   const { file } = useFile();
   const { push } = useRouter();
 
-  const resetGame = useCallback(() => {
-    setScore(0);
-    setHistory([]);
+  const resetTracking = useCallback(() => {
     setVideoPoses([]);
     setWebcamPoses([]);
-  }, [setHistory, setScore, setVideoPoses, setWebcamPoses]);
+  }, [setVideoPoses, setWebcamPoses]);
 
   useEffect(() => {
     if (!file) push("/");
-    return () => resetGame();
-  }, [file, push, resetGame]);
+    return () => resetTracking();
+  }, [file, push, resetTracking]);
 
   if (!file || window === null) return null;
   return (

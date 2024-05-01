@@ -33,11 +33,20 @@ const ScoreView: React.FC = () => {
     setHistory([]);
     setScore(0);
     togglePause(true);
-    push("/tracking");
   };
   if (!score) {
     return null;
   }
+
+  const restartGame = () => {
+    resetGame();
+    push("/tracking");
+  };
+
+  const goHome = () => {
+    resetGame();
+    push("/");
+  };
 
   return (
     <Container>
@@ -71,7 +80,10 @@ const ScoreView: React.FC = () => {
           <Score> {scoreForCurrentHash?.score.toFixed(2) || 0}!</Score>
         </Record>
       )}
-      <Button onClick={resetGame}>
+      <Button onClick={restartGame}>
+        <ReplayIcon />
+      </Button>
+      <Button onClick={goHome}>
         <ReplayIcon />
       </Button>
     </Container>

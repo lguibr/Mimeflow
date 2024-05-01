@@ -51,7 +51,7 @@ const AppBar = () => {
         <Link href={"/"}>
           <Logo width="30px" height="30px" />
         </Link>
-        <h1>Mime Flow</h1>
+        <p>Mime Flow</p>
       </AppBarTitle>
     </AppBarContainer>
   );

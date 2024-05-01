@@ -50,7 +50,10 @@ const Pose3DViewer: React.FC<Pose3DViewerProps> = ({ type }) => {
             p.createCanvas(canvasWidth, canvasHeight, p.WEBGL).parent(
               p5ContainerRef.current
             );
-            p.frameRate(30);
+            const isDesktop = () =>
+              typeof window !== "undefined" && window.innerWidth >= 1024;
+
+            p.frameRate(isDesktop() ? 60 : 30);
           }
         };
 

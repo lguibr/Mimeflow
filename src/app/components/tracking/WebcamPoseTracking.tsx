@@ -31,7 +31,11 @@ const PoseTracking: React.FC = () => {
 
         video = p.createCapture((p as any).VIDEO);
         video.hide();
-        p.frameRate(60);
+
+        const isDesktop = () =>
+          typeof window !== "undefined" && window.innerWidth >= 1024;
+
+        p.frameRate(isDesktop() ? 60 : 30);
       };
 
       p.windowResized = () => {

@@ -46,8 +46,10 @@ const VideoPoseTracking: React.FC = () => {
           video.noLoop();
           video.elt.loop = false;
           (video.elt as HTMLVideoElement).loop = false;
-          p.frameRate(60);
+          const isDesktop = () =>
+            typeof window !== "undefined" && window.innerWidth >= 1024;
 
+          p.frameRate(isDesktop() ? 60 : 30);
           if (video) video.elt.addEventListener("ended", () => push("/score"));
         }
       };

@@ -3,8 +3,8 @@ import React from "react";
 const ReplayIcon: React.FC = () => {
   return (
     <svg
-      width="18.000305mm"
-      height="17.987823mm"
+      width="45"
+      height="42"
       viewBox="0 0 18.000305 17.987823"
       version="1.1"
       id="svg5"

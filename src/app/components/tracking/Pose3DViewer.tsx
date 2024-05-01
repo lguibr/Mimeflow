@@ -46,11 +46,12 @@ const Pose3DViewer: React.FC<Pose3DViewerProps> = ({ type }) => {
           const containerRect = p5ContainerRef.current?.getBoundingClientRect();
           canvasWidth = containerRect?.width || p.windowWidth;
           canvasHeight = containerRect?.height || p.windowHeight;
-
-          p.createCanvas(canvasWidth, canvasHeight, p.WEBGL).parent(
-            p5ContainerRef.current!
-          );
-          p.frameRate(30);
+          if (p5ContainerRef.current) {
+            p.createCanvas(canvasWidth, canvasHeight, p.WEBGL).parent(
+              p5ContainerRef.current
+            );
+            p.frameRate(30);
+          }
         };
 
         p.draw = () => {

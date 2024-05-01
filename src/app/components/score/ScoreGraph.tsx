@@ -22,7 +22,7 @@ Chart.register(
 );
 
 const LineGraph: React.FC = () => {
-  const { history, score } = useGameViews();
+  const { history } = useGameViews();
 
   const labels = history.map((_, index) => index.toString());
   const data = {

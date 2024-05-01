@@ -18,9 +18,6 @@ const ScoreView: React.FC = () => {
   const leaderBoard = useLiveQuery(() => db.leaderBoard.toArray());
   const scoreForCurrentHash = leaderBoard?.find((entry) => entry.hash === hash);
 
-  if (!scoreForCurrentHash || scoreForCurrentHash?.score < score) {
-    db.leaderBoard.put({ hash, score });
-  }
   useEffect(() => {
     if (!score) {
       setFile(null);
@@ -29,11 +26,14 @@ const ScoreView: React.FC = () => {
   }, [push, score, setFile]);
 
   const resetGame = () => {
+    if (!scoreForCurrentHash || scoreForCurrentHash?.score < score) {
+      db.leaderBoard.put({ hash, score });
+    }
     setFile(null);
     setHistory([]);
     setScore(0);
     togglePause(true);
-    push("/");
+    push("/tracking");
   };
   if (!score) {
     return null;

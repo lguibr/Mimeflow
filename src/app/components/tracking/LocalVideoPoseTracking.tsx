@@ -24,6 +24,11 @@ const VideoPoseTracking: React.FC = () => {
   const { file } = useFile();
 
   useEffect(() => {
+    // add a event listener to thhe event video finished
+    const video = document.createElement("video");
+  }, []);
+
+  useEffect(() => {
     let video: p5.Element;
     let scaleFactor = 1;
 
@@ -45,15 +50,7 @@ const VideoPoseTracking: React.FC = () => {
           video.hide();
           p.frameRate(60);
 
-          if (video)
-            video.elt.onloadedmetadata = () => {
-              if (video) {
-                video && video.elt.pause();
-                video.elt.onended = () => {
-                  push("/score");
-                };
-              }
-            };
+          if (video) video.elt.addEventListener("ended", () => push("/score"));
         }
       };
 

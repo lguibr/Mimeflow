@@ -1,7 +1,6 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 
 type ContextValue = {
-  scorePreview: boolean;
   webcamPreview3D: boolean;
   videoPreview3D: boolean;
 };
@@ -15,14 +14,12 @@ export const SettingsProvider = ({
 }) => {
   const checkScreenSize = () =>
     typeof window !== "undefined" && window.innerWidth >= 1024;
-  const [scorePreview, setScorePreview] = useState(true);
-  const [webcamPreview3D, setWebcamPreview3D] = useState(checkScreenSize());
-  const [videoPreview3D, setVidePreview3D] = useState(checkScreenSize());
+  const webcamPreview3D = checkScreenSize();
+  const videoPreview3D = checkScreenSize();
 
   return (
     <SettingsContext.Provider
       value={{
-        scorePreview,
         webcamPreview3D,
         videoPreview3D,
       }}

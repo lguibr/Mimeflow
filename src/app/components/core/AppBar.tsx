@@ -1,7 +1,6 @@
 import React from "react";
 import styled from "styled-components";
 import Logo from "./Logo";
-import { useSettings } from "@/app/contexts/Settings";
 import Link from "next/link";
 import { useGameActions } from "@/app/contexts/Game";
 import { useFile } from "@/app/contexts/File";
@@ -47,23 +46,27 @@ const AppBar = () => {
 
   return (
     <AppBarContainer onClick={(e) => e.stopPropagation()}>
-      <AppBarTitle onClick={resetGame}>
-        <Link href={"/"}>
+      <Linked onClick={resetGame} href={"/"}>
+        <AppBarTitle>
           <Logo width="30px" height="30px" />
-        </Link>
-        <p>Mime Flow</p>
-      </AppBarTitle>
+          <p>Mime Flow</p>
+        </AppBarTitle>
+      </Linked>
     </AppBarContainer>
   );
 };
 
 export default AppBar;
 
-const Row = styled.div`
-  border-radius: 8px;
-  padding: 5px;
+const Linked = styled(Link)`
+  text-decoration: none;
+  color: inherit;
+  cursor: pointer;
   display: flex;
-  justify-content: center;
   align-items: center;
-  flex-direction: column;
+  gap: 10px;
+  &:hover {
+    text-decoration: none;
+    color: inherit;
+  }
 `;

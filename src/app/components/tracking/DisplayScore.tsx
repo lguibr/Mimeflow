@@ -52,7 +52,6 @@ const SubInfoText = styled.div`
 const SimilarityDisplay: React.FC = () => {
   const { score, similarity } = useGameViews();
   const getPixels = usePercentageToPixels();
-  const { scorePreview } = useSettings();
   const data = {
     datasets: [
       {
@@ -82,7 +81,6 @@ const SimilarityDisplay: React.FC = () => {
   const [_x100, y100] = getPixels(100, 100);
   const [x30, y30] = getPixels(30, 30);
 
-  if (!scorePreview) return null;
   return (
     <FloatingWindow
       x={x0}

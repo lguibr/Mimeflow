@@ -102,10 +102,15 @@ const GameProvider: React.FC<{
 
       await tf.ready();
 
+      const is2k = () =>
+        typeof window !== "undefined" && window.innerWidth >= 2560;
+
+      const isDesktop = () =>
+        typeof window !== "undefined" && window.innerWidth >= 1024;
+
       const detectorConfig: poseDetection.BlazePoseMediaPipeModelConfig = {
         runtime: "mediapipe",
-        modelType: "lite",
-
+        modelType: is2k() ? "heavy" : isDesktop() ? "full" : "lite",
         solutionPath: `https://cdn.jsdelivr.net/npm/@mediapipe/pose@${mpPose.VERSION}`,
       };
 
@@ -116,7 +121,7 @@ const GameProvider: React.FC<{
       const webcam: poseDetection.PoseDetector =
         await poseDetection.createDetector(
           poseDetection.SupportedModels.BlazePose,
-          detectorConfig
+          { ...detectorConfig }
         );
       videoNetRef.current = video;
       webcamNetRef.current = webcam;
@@ -141,7 +146,7 @@ const GameProvider: React.FC<{
       setVideoPoses,
       setHistory,
     }),
-    [togglePause, setWebcamPoses, setVideoPoses]
+    [togglePause]
   );
 
   const state = useMemo(

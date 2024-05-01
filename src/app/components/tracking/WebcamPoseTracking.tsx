@@ -117,7 +117,6 @@ const Container = styled.div`
 
 const CanvasContainer = styled.div`
   position: absolute;
-  zindex: 999;
   width: 100%;
   height: 100%;
   top: 0;
@@ -132,7 +131,6 @@ const CanvasContainer = styled.div`
   }
   canvas {
     position: absolute;
-    zindex: 999;
     top: 0;
     right: 0;
     border-radius: 50%;

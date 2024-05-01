@@ -37,11 +37,15 @@ const AppBarTitle = styled.h1`
 `;
 
 const AppBar = () => {
-  const { setHistory } = useGameActions();
+  const { setHistory, setScore, setVideoPoses, setWebcamPoses } =
+    useGameActions();
   const { setFile } = useFile();
   const resetGame = () => {
     setFile(null);
     setHistory([]);
+    setScore(0);
+    setVideoPoses([]);
+    setWebcamPoses([]);
   };
 
   return (
@@ -49,7 +53,7 @@ const AppBar = () => {
       <Linked onClick={resetGame} href={"/"}>
         <AppBarTitle>
           <Logo width="30px" height="30px" />
-          <p>Mime Flow</p>
+          <p>MimeFlow 0.1 </p>
         </AppBarTitle>
       </Linked>
     </AppBarContainer>

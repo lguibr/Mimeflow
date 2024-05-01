@@ -52,7 +52,7 @@ export default function RootLayout({
   return (
     <html>
       <head>
-        <title>MimeFlow v0 - The Pose Matching Application</title>
+        <title>MimeFlow 0.1 - The Pose Matching Application</title>
       </head>
       <body>
         <StyledComponentsRegistry>

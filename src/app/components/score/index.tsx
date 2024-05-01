@@ -10,6 +10,7 @@ import { useLiveQuery } from "dexie-react-hooks";
 import { db } from "@/app/services/dexie";
 import ReplayIcon from "../core/Replay";
 import { useEffect } from "react";
+import HomeIcon from "../core/HomeIcon";
 const ScoreView: React.FC = () => {
   const { push } = useRouter();
   const { setFile, hash } = useFile();
@@ -18,18 +19,10 @@ const ScoreView: React.FC = () => {
   const leaderBoard = useLiveQuery(() => db.leaderBoard.toArray());
   const scoreForCurrentHash = leaderBoard?.find((entry) => entry.hash === hash);
 
-  useEffect(() => {
-    if (!score) {
-      setFile(null);
-      push("/");
-    }
-  }, [push, score, setFile]);
-
   const resetGame = () => {
     if (!scoreForCurrentHash || scoreForCurrentHash?.score < score) {
       db.leaderBoard.put({ hash, score });
     }
-    setFile(null);
     setHistory([]);
     setScore(0);
     togglePause(true);
@@ -44,6 +37,7 @@ const ScoreView: React.FC = () => {
   };
 
   const goHome = () => {
+    setFile(null);
     resetGame();
     push("/");
   };
@@ -80,18 +74,27 @@ const ScoreView: React.FC = () => {
           <Score> {scoreForCurrentHash?.score.toFixed(2) || 0}!</Score>
         </Record>
       )}
-      <Button onClick={restartGame}>
-        <ReplayIcon />
-      </Button>
-      <Button onClick={goHome}>
-        <ReplayIcon />
-      </Button>
+      <Actions>
+        <Button onClick={restartGame}>
+          <ReplayIcon />
+        </Button>
+        <Button onClick={goHome}>
+          <HomeIcon />
+        </Button>
+      </Actions>
     </Container>
   );
 };
 
 export default ScoreView;
 
+const Actions = styled.div`
+  display: flex;
+  justify-content: space-around;
+  align-items: center;
+  gap: 4rem;
+  width: 100%;
+`;
 const Block = styled.div`
   display: flex;
   justify-content: center;

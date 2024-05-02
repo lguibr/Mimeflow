@@ -90,16 +90,17 @@ export default ScoreView;
 
 const Actions = styled.div`
   display: flex;
-  justify-content: space-around;
+  justify-content: center;
   align-items: center;
-  gap: 4rem;
   width: 100%;
+  gap: 4rem;
 `;
 const Block = styled.div`
   display: flex;
   justify-content: center;
   flex-direction: column;
   align-items: center;
+  z-index: 999999;
 `;
 const Container = styled.div`
   display: flex;
@@ -118,6 +119,7 @@ const Container = styled.div`
   overflow: hidden; /* Hide overflowed text */
   text-overflow: ellipsis; /* Show ellipsis when text overflows */
   padding-top: 70px;
+  text-shadow: 2px 2px 4px black;
 `;
 
 const Hash = styled.p`

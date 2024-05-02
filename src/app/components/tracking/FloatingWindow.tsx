@@ -45,7 +45,7 @@ interface Position {
   y: number;
 }
 
-const AppBarHeight = 100; // Define the height of the AppBar
+const AppBarHeight = 75; // Define the height of the AppBar
 
 const FloatingWindow: React.FC<FloatingWindowProps> = ({
   zIndex = 999,
@@ -75,28 +75,26 @@ const FloatingWindow: React.FC<FloatingWindowProps> = ({
   );
   const [relPosition, setRelPosition] = useState<Position>({ x: 0, y: 0 });
 
-  const onMouseDown = useCallback(
-    (e: React.MouseEvent<HTMLDivElement>) => {
+  const onStart = useCallback(
+    (clientX: number, clientY: number) => {
       setDragging(true);
       setRelPosition({
-        x: e.pageX - position.x,
-        y: e.pageY - position.y,
+        x: clientX - position.x,
+        y: clientY - position.y,
       });
-      e.stopPropagation();
-      e.preventDefault();
     },
     [position]
   );
 
-  const onMouseUp = useCallback(() => {
+  const onEnd = useCallback(() => {
     setDragging(false);
   }, []);
 
-  const onMouseMove = useCallback(
-    (e: MouseEvent) => {
+  const onMove = useCallback(
+    (clientX: number, clientY: number) => {
       if (dragging) {
-        const newX = e.pageX - relPosition.x;
-        const newY = e.pageY - relPosition.y;
+        const newX = clientX - relPosition.x;
+        const newY = clientY - relPosition.y;
         const constrainedPosition = constrainPosition(newX, newY);
         setPosition(constrainedPosition);
       }
@@ -105,19 +103,29 @@ const FloatingWindow: React.FC<FloatingWindowProps> = ({
   );
 
   useEffect(() => {
+    const handleMouseMove = (e: MouseEvent) => onMove(e.clientX, e.clientY);
+    const handleTouchMove = (e: TouchEvent) =>
+      onMove(e.touches[0].clientX, e.touches[0].clientY);
+
     if (dragging) {
-      window.addEventListener("mousemove", onMouseMove);
-      window.addEventListener("mouseup", onMouseUp);
+      window.addEventListener("mousemove", handleMouseMove);
+      window.addEventListener("touchmove", handleTouchMove, { passive: false });
+      window.addEventListener("mouseup", onEnd);
+      window.addEventListener("touchend", onEnd);
     } else {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("mouseup", onEnd);
+      window.removeEventListener("touchend", onEnd);
     }
 
     return () => {
-      window.removeEventListener("mousemove", onMouseMove);
-      window.removeEventListener("mouseup", onMouseUp);
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("touchmove", handleTouchMove);
+      window.removeEventListener("mouseup", onEnd);
+      window.removeEventListener("touchend", onEnd);
     };
-  }, [dragging, onMouseMove, onMouseUp]);
+  }, [dragging, onMove, onEnd]);
 
   return (
     <DraggableWindow
@@ -126,7 +134,11 @@ const FloatingWindow: React.FC<FloatingWindowProps> = ({
       $zIndex={zIndex}
       width={width}
       height={height}
-      onMouseDown={onMouseDown}
+      onMouseDown={(e) => onStart(e.clientX, e.clientY)}
+      onTouchStart={(e) => {
+        e.preventDefault(); // Prevents mobile scrolling when dragging
+        onStart(e.touches[0].clientX, e.touches[0].clientY);
+      }}
       onClick={(e) => e.stopPropagation()}
     >
       {children}

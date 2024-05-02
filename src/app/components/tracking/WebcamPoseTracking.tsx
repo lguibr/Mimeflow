@@ -73,7 +73,7 @@ const PoseTracking: React.FC = () => {
           }
           const end = Date.now();
           const fps = 1000 / (end - start);
-          if (p.frameCount % 60 === 0) setFps(fps);
+          if (p.frameCount % 20 === 0) setFps(fps);
         }
       };
     };

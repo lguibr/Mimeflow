@@ -5,7 +5,6 @@ import { useGameViews } from "@/app/contexts/Game";
 import { Chart, ArcElement, Tooltip, Legend } from "chart.js";
 import FloatingWindow from "./FloatingWindow";
 import usePercentageToPixels from "@/app/hooks/usePercentageToPixels";
-import { useSettings } from "@/app/contexts/Settings";
 
 Chart.register(ArcElement, Tooltip, Legend);
 
@@ -40,11 +39,11 @@ const InfoText = styled.div<{ color: string }>`
 `;
 const SubInfoText = styled.div`
   position: absolute;
-  top: calc(50% + +8rem);
+  top: calc(50% + 0.5rem);
   left: 50%;
   transform: translate(-50%, -50%);
   color: #ffffffb3;
-  font-size: 2rem;
+  font-size: 1.5rem;
   text-align: center;
   width: 100%;
 `;
@@ -94,9 +93,9 @@ const SimilarityDisplay: React.FC = () => {
           id={similarity + Date.now().toString()}
           color={getColor(similarity)}
         >
-          {similarity.toFixed(2)}
+          {(similarity * 100).toFixed(0)}%
         </InfoText>
-        <SubInfoText>Score : {score.toFixed(2)}</SubInfoText>
+        <SubInfoText>{score.toFixed(0)}</SubInfoText>
       </Container>
     </FloatingWindow>
   );

@@ -138,7 +138,7 @@ export default VideoPoseTracking;
 
 const CanvasContainer = styled.div`
   position: absolute;
-  z-index: 9;
+  z-index: 5;
   width: 100vw;
   height: 100vh;
   top: 0;
@@ -146,7 +146,7 @@ const CanvasContainer = styled.div`
   box-sizing: border-box;
   canvas {
     position: absolute;
-    z-index: 9;
+    z-index: 5;
     top: 0;
     right: 0;
     width: 100vw;
@@ -156,7 +156,7 @@ const CanvasContainer = styled.div`
   }
   video {
     position: absolute;
-    z-index: 9;
+    z-index: 5;
     top: 0;
     right: 0;
     width: 100vw;

@@ -78,10 +78,11 @@ const Background: React.FC = () => {
   }, []);
 
   return (
-    <div ref={canvasRef} style={{ position: "fixed", zIndex: -1 }}>
-      <FpsInfo>{fps?.toFixed(0)} fps</FpsInfo>
+    <>
+      <div ref={canvasRef} style={{ position: "fixed", zIndex: -1 }}></div>
+      {fps && <FpsInfo>{fps?.toFixed(0)} fps</FpsInfo>}
       <BackendInfo>on {backend}</BackendInfo>
-    </div>
+    </>
   );
 };
 
@@ -95,6 +96,7 @@ const BackendInfo = styled.div`
   font-size: 1.5rem;
   text-transform: capitalize;
   font-weight: bold;
+  z-index: 9999999999999;
 `;
 const FpsInfo = styled.div`
   position: fixed;
@@ -104,4 +106,5 @@ const FpsInfo = styled.div`
   font-size: 1.5rem;
   text-transform: capitalize;
   font-weight: bold;
+  z-index: 9999999999999;
 `;

@@ -16,6 +16,12 @@ const CoreProvider = dynamic(
     ssr: false,
   }
 );
+const WebcamPoseTracking = dynamic(
+  () => import("@/app/components/tracking/WebcamPoseTracking"),
+  {
+    ssr: false,
+  }
+);
 
 const GlobalStyles = createGlobalStyle`
   *,
@@ -62,6 +68,8 @@ export default function RootLayout({
               <Container>
                 <Background />
                 <AppBar />
+                <WebcamPoseTracking />
+
                 {children}
               </Container>
             </CoreProvider>

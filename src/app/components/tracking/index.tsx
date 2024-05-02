@@ -55,7 +55,6 @@ const App: React.FC = () => {
           <LocalVideoPoseTracking />
           <Pose3DViewer type="webcam" />
           <Pose3DViewer type="video" />
-          <WebcamPoseTracking />
           <ScoreGraphs />
         </>
       )}

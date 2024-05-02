@@ -1,9 +1,11 @@
 import React, { useEffect, useRef } from "react";
 import p5 from "p5";
+import { useGameViews } from "@/app/contexts/Game";
+import styled from "styled-components";
 
 const Background: React.FC = () => {
   const canvasRef = useRef<HTMLDivElement>(null);
-
+  const { backend, fps } = useGameViews();
   useEffect(() => {
     const sketch = (p: p5) => {
       let spheres: p5.Vector[] = [];
@@ -44,7 +46,7 @@ const Background: React.FC = () => {
           p.translate(sphere.x, sphere.y, sphere.z);
           p.fill(255);
           p.noStroke();
-          p.sphere(2);
+          p.sphere(p.random(1, 3));
           p.pop();
         }
 
@@ -75,7 +77,31 @@ const Background: React.FC = () => {
     };
   }, []);
 
-  return <div ref={canvasRef} style={{ position: "fixed", zIndex: -1 }} />;
+  return (
+    <div ref={canvasRef} style={{ position: "fixed", zIndex: -1 }}>
+      <FpsInfo>{fps?.toFixed(0)} fps</FpsInfo>
+      <BackendInfo>on {backend}</BackendInfo>
+    </div>
+  );
 };
 
 export default Background;
+
+const BackendInfo = styled.div`
+  position: fixed;
+  bottom: 0.5rem;
+  right: 0.5rem;
+  color: white;
+  font-size: 1.5rem;
+  text-transform: capitalize;
+  font-weight: bold;
+`;
+const FpsInfo = styled.div`
+  position: fixed;
+  bottom: 2rem;
+  right: 0.5rem;
+  color: white;
+  font-size: 1.5rem;
+  text-transform: capitalize;
+  font-weight: bold;
+`;

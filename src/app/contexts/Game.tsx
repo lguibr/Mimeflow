@@ -33,6 +33,8 @@ interface GameState {
   webcamPoints3d: IKeypoint3D[];
   videoPoints3d: IKeypoint3D[];
   history: number[];
+  backend: string | undefined;
+  fps?: number;
 }
 
 interface GameActions {
@@ -41,6 +43,7 @@ interface GameActions {
   setVideoPoses: React.Dispatch<React.SetStateAction<poseDetection.Pose[]>>;
   setHistory: React.Dispatch<React.SetStateAction<number[]>>;
   setScore: React.Dispatch<React.SetStateAction<number>>;
+  setFps: React.Dispatch<React.SetStateAction<number | undefined>>;
 }
 
 const GameStateContext = createContext<GameState | undefined>(undefined);
@@ -59,6 +62,8 @@ const GameProvider: React.FC<{
   const [videoPoses, setVideoPoses] = useState<poseDetection.Pose[]>([]);
   const [loaded, setLoaded] = useState<boolean>(false);
   const [history, setHistory] = useState<number[]>([]);
+  const [backend, setBackend] = useState<string | undefined>();
+  const [fps, setFps] = useState<number | undefined>();
 
   const [webcamPose] = webcamPoses;
   const [videoPose] = videoPoses;
@@ -102,6 +107,9 @@ const GameProvider: React.FC<{
       );
 
       await tf.ready();
+      const currentBackend = await tf.getBackend();
+      setBackend(currentBackend);
+      console.log({ currentBackend });
 
       const is2k = () =>
         typeof window !== "undefined" && window.innerWidth >= 2560;
@@ -147,6 +155,7 @@ const GameProvider: React.FC<{
       setVideoPoses,
       setHistory,
       setScore,
+      setFps,
     }),
     [togglePause]
   );
@@ -162,6 +171,8 @@ const GameProvider: React.FC<{
       webcamPoints3d,
       videoPoints3d,
       history,
+      backend,
+      fps,
     }),
     [
       similarity,
@@ -171,6 +182,8 @@ const GameProvider: React.FC<{
       webcamPoints3d,
       videoPoints3d,
       history,
+      backend,
+      fps,
     ]
   );
 

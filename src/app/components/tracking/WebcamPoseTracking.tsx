@@ -14,7 +14,7 @@ import FloatingWindow from "./FloatingWindow";
 
 const PoseTracking: React.FC = () => {
   const { webcamNet: net } = useGameViews();
-  const { setWebcamPoses: setPoses } = useGameActions();
+  const { setWebcamPoses: setPoses, setFps } = useGameActions();
 
   const webcamRef = useRef<Webcam>(null);
   const p5ContainerRef = useRef<HTMLDivElement>(null);
@@ -46,6 +46,7 @@ const PoseTracking: React.FC = () => {
 
       p.draw = async () => {
         if (video && (video as any).loadedmetadata) {
+          const start = Date.now();
           const containerHeight = p5ContainerRef.current?.offsetHeight || 1;
           const videoWidth = (video as any).width;
           const videoHeight = (video as any).height;
@@ -70,6 +71,9 @@ const PoseTracking: React.FC = () => {
             setPoses(detectedPoses);
             draw2DPose(p, detectedPoses, scaleRatio, x, y);
           }
+          const end = Date.now();
+          const fps = 1000 / (end - start);
+          if (p.frameCount % 60 === 0) setFps(fps);
         }
       };
     };
@@ -81,7 +85,7 @@ const PoseTracking: React.FC = () => {
       video.elt.remove();
       video.remove();
     };
-  }, [net, setPoses]);
+  }, [net, setFps, setPoses]);
   const getPixels = usePercentageToPixels();
 
   const [x0, y0] = getPixels(0, 0);

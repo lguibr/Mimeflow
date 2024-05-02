@@ -10,11 +10,13 @@ import { useRouter } from "next/navigation";
 
 import { useGameActions, useGameViews } from "@/app/contexts/Game";
 
-import { draw2DPose } from "@/app/utils/draw";
+import { draw2DKeyPoints } from "@/app/utils/draw";
 import { useFile } from "@/app/contexts/File";
+import { IKeypoint3D } from "@/app/utils/calculations";
 
 const VideoPoseTracking: React.FC = () => {
-  const { videoNet: net, isPaused } = useGameViews();
+  const { videoNet: net, activeSampleSpace, isPaused } = useGameViews();
+
   const { setVideoPoses: setPoses, togglePause } = useGameActions();
 
   const p5ContainerRef = useRef<HTMLDivElement>(null);
@@ -22,6 +24,8 @@ const VideoPoseTracking: React.FC = () => {
 
   const { push } = useRouter();
   const { file } = useFile();
+  const keyPoints = useRef<IKeypoint3D[]>([]);
+  const processingFrameRate = useRef<number>(1);
 
   useEffect(() => {
     let video: p5.MediaElement;
@@ -86,15 +90,20 @@ const VideoPoseTracking: React.FC = () => {
           const x = (containerWidth - displayWidth) / 2;
           const y = (containerHeight - displayHeight) / 2;
 
-          const detectedPoses = await net?.estimatePoses(
-            video.elt as HTMLVideoElement
-          );
+          const detectedPoses =
+            p.frameCount % processingFrameRate.current === 0
+              ? await net?.estimatePoses(video.elt as HTMLVideoElement)
+              : undefined;
 
           p.clear();
+
           p.image(video, x, y, displayWidth, displayHeight);
-          if (detectedPoses) {
+          if (keyPoints.current && keyPoints.current.length > 0)
+            draw2DKeyPoints(p, keyPoints.current, scaleFactor, x, y);
+
+          if (detectedPoses && detectedPoses.length > 0) {
             setPoses(detectedPoses);
-            draw2DPose(p, detectedPoses, scaleFactor, x, y);
+            keyPoints.current = detectedPoses[0].keypoints;
           }
 
           if (
@@ -118,11 +127,21 @@ const VideoPoseTracking: React.FC = () => {
     };
   }, [file, net, push, setPoses, togglePause]);
 
-  if (!file) {
-    push("/");
-    return null;
-  }
+  useEffect(() => {
+    if (
+      activeSampleSpace &&
+      processingFrameRate.current !== activeSampleSpace
+    ) {
+      processingFrameRate.current = activeSampleSpace;
+    }
+  }, [activeSampleSpace]);
 
+  useEffect(() => {
+    if (!file) {
+      push("/");
+    }
+  }, [file, push]);
+  if (!file) return null;
   return (
     <>
       <Container>

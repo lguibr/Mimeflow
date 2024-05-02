@@ -106,7 +106,12 @@ const FloatingWindow: React.FC<FloatingWindowProps> = ({
     const handleMouseMove = (e: MouseEvent) => onMove(e.clientX, e.clientY);
     const handleTouchMove = (e: TouchEvent) =>
       onMove(e.touches[0].clientX, e.touches[0].clientY);
+    const handleResize = () => {
+      const updatedPosition = constrainPosition(position.x, position.y);
+      setPosition(updatedPosition);
+    };
 
+    window.addEventListener("resize", handleResize);
     if (dragging) {
       window.addEventListener("mousemove", handleMouseMove);
       window.addEventListener("touchmove", handleTouchMove, { passive: false });
@@ -124,8 +129,9 @@ const FloatingWindow: React.FC<FloatingWindowProps> = ({
       window.removeEventListener("touchmove", handleTouchMove);
       window.removeEventListener("mouseup", onEnd);
       window.removeEventListener("touchend", onEnd);
+      window.removeEventListener("resize", handleResize);
     };
-  }, [dragging, onMove, onEnd]);
+  }, [dragging, onMove, onEnd, constrainPosition, position]);
 
   return (
     <DraggableWindow

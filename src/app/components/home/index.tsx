@@ -41,4 +41,6 @@ const Container = styled.div`
   flex-direction: column;
   gap: 20%;
   color: white;
+  padding-bottom: 50px;
+  padding: 2rem;
 `;

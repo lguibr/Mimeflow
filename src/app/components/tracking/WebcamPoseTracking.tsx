@@ -7,20 +7,32 @@ import Webcam from "react-webcam";
 
 import styled from "styled-components";
 
-import { draw2DPose } from "@/app/utils/draw";
+import { draw2DKeyPoints } from "@/app/utils/draw";
 import { useGameActions, useGameViews } from "@/app/contexts/Game";
 import usePercentageToPixels from "@/app/hooks/usePercentageToPixels";
 import FloatingWindow from "./FloatingWindow";
+import { IKeypoint3D } from "@/app/utils/calculations";
 
 const PoseTracking: React.FC = () => {
-  const { webcamNet: net } = useGameViews();
-  const { setWebcamPoses: setPoses, setFps } = useGameActions();
-
+  const { webcamNet: net, activeSampleSpace, fps } = useGameViews();
+  const {
+    setWebcamPoses: setPoses,
+    setFps,
+    setActiveSampleSpace,
+  } = useGameActions();
   const webcamRef = useRef<Webcam>(null);
   const p5ContainerRef = useRef<HTMLDivElement>(null);
   const p5InstanceRef = useRef<p5>();
 
+  const keyPoints = useRef<IKeypoint3D[]>([]);
+  const processingFrameRate = useRef<number>(1);
+
+  const isDesktop = () =>
+    typeof window !== "undefined" && window.innerWidth >= 1024;
+
   useEffect(() => {
+    const frameRate = isDesktop() ? 60 : 30;
+
     let video: p5.Element;
     let scaleRatio = 1;
     const sketch = (p: p5) => {
@@ -32,10 +44,7 @@ const PoseTracking: React.FC = () => {
         video = p.createCapture((p as any).VIDEO);
         video.hide();
 
-        const isDesktop = () =>
-          typeof window !== "undefined" && window.innerWidth >= 1024;
-
-        p.frameRate(isDesktop() ? 60 : 30);
+        p.frameRate(frameRate);
       };
 
       p.windowResized = () => {
@@ -48,32 +57,45 @@ const PoseTracking: React.FC = () => {
         if (video && (video as any).loadedmetadata) {
           const start = Date.now();
           const containerHeight = p5ContainerRef.current?.offsetHeight || 1;
+          const containerWidth = p5ContainerRef.current?.offsetWidth || 1;
           const videoWidth = (video as any).width;
           const videoHeight = (video as any).height;
 
-          scaleRatio = containerHeight / videoHeight;
+          const smallerContainerDimension = Math.min(
+            containerHeight,
+            containerWidth
+          );
+
+          const smallerVideoDimension = Math.min(videoWidth, videoHeight);
+
+          scaleRatio = smallerContainerDimension / smallerVideoDimension;
 
           const scaledWidth = videoWidth * scaleRatio;
           const scaledHeight = videoHeight * scaleRatio;
           const x = (p.width - scaledWidth) / 2;
           const y = 0;
 
-          const detectedPoses = await net?.estimatePoses(
-            video.elt as HTMLVideoElement
-          );
+          const detectedPoses =
+            p.frameCount % processingFrameRate.current === 0
+              ? await net?.estimatePoses(video.elt as HTMLVideoElement)
+              : undefined;
 
           p.clear();
           p.translate(p.width, 0); // Move the origin to the right side of the canvas
           p.scale(-1, 1); // Flip the canvas horizontally
           p.image(video, x, y, scaledWidth, scaledHeight);
+          if (keyPoints?.current)
+            draw2DKeyPoints(p, keyPoints.current, scaleRatio, x, y);
 
-          if (detectedPoses) {
+          if (detectedPoses && detectedPoses.length > 0) {
+            const end = Date.now();
+            const time = end - start;
+            const fps = 1000 / time;
+            if ((p.frameCount % 10) * processingFrameRate.current === 0)
+              setFps(fps);
             setPoses(detectedPoses);
-            draw2DPose(p, detectedPoses, scaleRatio, x, y);
+            keyPoints.current = detectedPoses[0]?.keypoints;
           }
-          const end = Date.now();
-          const fps = 1000 / (end - start);
-          if (p.frameCount % 20 === 0) setFps(fps);
         }
       };
     };
@@ -85,11 +107,35 @@ const PoseTracking: React.FC = () => {
       video.elt.remove();
       video.remove();
     };
-  }, [net, setFps, setPoses]);
+  }, [net, setActiveSampleSpace, setFps, setPoses]);
   const getPixels = usePercentageToPixels();
 
+  useEffect(() => {
+    const ticker = setInterval(() => {
+      const frameRate = isDesktop() ? 60 : 30;
+      const timeToRenderFrame = 1000 / frameRate;
+      const processFps = fps;
+      const timeToProcessFrame = processFps
+        ? 1000 / processFps / activeSampleSpace
+        : undefined;
+
+      const newCalculatedRatio =
+        timeToProcessFrame && Math.ceil(timeToProcessFrame / timeToRenderFrame);
+
+      const haveChanged =
+        newCalculatedRatio && newCalculatedRatio !== activeSampleSpace;
+
+      if (haveChanged) {
+        processingFrameRate.current = newCalculatedRatio;
+        setActiveSampleSpace(newCalculatedRatio);
+      }
+    }, 1000);
+    return () => {
+      clearInterval(ticker);
+    };
+  }, [activeSampleSpace, fps, setActiveSampleSpace]);
+
   const [x0, y0] = getPixels(0, 0);
-  const [x100, y100] = getPixels(100, 100);
   const [x30, y30] = getPixels(30, 30);
   return (
     <FloatingWindow

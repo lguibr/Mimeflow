@@ -5,7 +5,7 @@ import styled from "styled-components";
 
 const Background: React.FC = () => {
   const canvasRef = useRef<HTMLDivElement>(null);
-  const { backend, fps } = useGameViews();
+  const { backend, fps, activeSampleSpace } = useGameViews();
   useEffect(() => {
     const sketch = (p: p5) => {
       let spheres: p5.Vector[] = [];
@@ -53,17 +53,22 @@ const Background: React.FC = () => {
         p.pop();
       };
 
-      p.mouseMoved = () => {
-        cameraX = p.map(p.mouseX / 2, 0, p.width, -p.PI / 2, p.PI / 2);
-        cameraY = p.map(p.mouseY / 2, 0, p.height, -p.PI / 2, p.PI / 2);
-      };
-      p.touchMoved = () => {
-        cameraX = p.map(p.mouseX / 2, 0, p.width, -p.PI / 2, p.PI / 2);
-        cameraY = p.map(p.mouseY / 2, 0, p.height, -p.PI / 2, p.PI / 2);
-      };
-
       p.windowResized = () => {
         p.resizeCanvas(p.windowWidth, p.windowHeight);
+      };
+
+      const handleOrientation = (event: DeviceOrientationEvent) => {
+        const { beta, gamma } = event;
+        if (beta != null && gamma != null) {
+          cameraX = p.map(gamma, -90, 90, -p.PI / 2, p.PI / 2);
+          cameraY = p.map(beta, -180, 180, -p.PI / 2, p.PI / 2);
+        }
+      };
+
+      window.addEventListener("deviceorientation", handleOrientation);
+
+      return () => {
+        window.removeEventListener("deviceorientation", handleOrientation);
       };
     };
 
@@ -76,12 +81,18 @@ const Background: React.FC = () => {
       instance?.remove();
     };
   }, []);
-
+  const timeToProcess = fps ? 1000 / fps : undefined;
+  const timeToProcessInMs = timeToProcess?.toFixed(0);
   return (
     <>
       <div ref={canvasRef} style={{ position: "fixed", zIndex: -1 }}></div>
-      {fps && <FpsInfo>{fps?.toFixed(0)} fps</FpsInfo>}
-      <BackendInfo>on {backend}</BackendInfo>
+      {timeToProcessInMs && (
+        <FpsInfo>{timeToProcessInMs} ms to process a frame</FpsInfo>
+      )}
+      <BackendInfo>Running on {backend}</BackendInfo>
+      <ActiveSampleSpace>
+        tracking ( 1 / {activeSampleSpace} ) frames
+      </ActiveSampleSpace>
     </>
   );
 };
@@ -90,21 +101,33 @@ export default Background;
 
 const BackendInfo = styled.div`
   position: fixed;
-  bottom: 0.5rem;
   right: 0.5rem;
   color: white;
-  font-size: 1.5rem;
+  font-size: 1rem;
   text-transform: capitalize;
   font-weight: bold;
   z-index: 9999999999999;
+  text-shadow: 2px 2px 4px black;
+  bottom: 2.5rem;
 `;
 const FpsInfo = styled.div`
   position: fixed;
-  bottom: 2rem;
   right: 0.5rem;
   color: white;
-  font-size: 1.5rem;
-  text-transform: capitalize;
+  font-size: 1rem;
   font-weight: bold;
   z-index: 9999999999999;
+  text-shadow: 2px 2px 4px black;
+  bottom: 0.5rem;
+`;
+const ActiveSampleSpace = styled.div`
+  position: fixed;
+  bottom: 1.5rem;
+
+  right: 0.5rem;
+  color: white;
+  font-size: 1rem;
+  font-weight: bold;
+  z-index: 9999999999999;
+  text-shadow: 2px 2px 4px black;
 `;

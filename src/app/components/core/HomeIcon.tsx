@@ -1,7 +1,6 @@
 import React from "react";
 
 const HomeIcon: React.FC = ({}) => {
-  console.log();
   return (
     <svg
       xmlns="http://www.w3.org/2000/svg"

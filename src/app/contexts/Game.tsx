@@ -35,6 +35,7 @@ interface GameState {
   history: number[];
   backend: string | undefined;
   fps?: number;
+  activeSampleSpace: number;
 }
 
 interface GameActions {
@@ -44,6 +45,7 @@ interface GameActions {
   setHistory: React.Dispatch<React.SetStateAction<number[]>>;
   setScore: React.Dispatch<React.SetStateAction<number>>;
   setFps: React.Dispatch<React.SetStateAction<number | undefined>>;
+  setActiveSampleSpace: React.Dispatch<React.SetStateAction<number>>;
 }
 
 const GameStateContext = createContext<GameState | undefined>(undefined);
@@ -55,6 +57,7 @@ const GameProvider: React.FC<{
   const videoNetRef = useRef<poseDetection.PoseDetector | null>(null);
   const webcamNetRef = useRef<poseDetection.PoseDetector | null>(null);
 
+  const [activeSampleSpace, setActiveSampleSpace] = useState<number>(1); // 1 is 100% 2 is 50% 3 is 33% ... 100/x%
   const [similarity, setSimilarityState] = useState<number>(0);
   const [score, setScore] = useState<number>(0);
   const [isPaused, setIsPaused] = useState<boolean>(true);
@@ -64,7 +67,6 @@ const GameProvider: React.FC<{
   const [history, setHistory] = useState<number[]>([]);
   const [backend, setBackend] = useState<string | undefined>();
   const [fps, setFps] = useState<number | undefined>();
-
   const [webcamPose] = webcamPoses;
   const [videoPose] = videoPoses;
   const webcamPoints3d = useMemo(
@@ -109,7 +111,6 @@ const GameProvider: React.FC<{
       await tf.ready();
       const currentBackend = await tf.getBackend();
       setBackend(currentBackend);
-      console.log({ currentBackend });
 
       const is2k = () =>
         typeof window !== "undefined" && window.innerWidth >= 2560;
@@ -125,7 +126,7 @@ const GameProvider: React.FC<{
 
       const video = await poseDetection.createDetector(
         poseDetection.SupportedModels.BlazePose,
-        detectorConfig
+        { ...detectorConfig }
       );
       const webcam: poseDetection.PoseDetector =
         await poseDetection.createDetector(
@@ -156,6 +157,7 @@ const GameProvider: React.FC<{
       setHistory,
       setScore,
       setFps,
+      setActiveSampleSpace,
     }),
     [togglePause]
   );
@@ -173,6 +175,7 @@ const GameProvider: React.FC<{
       history,
       backend,
       fps,
+      activeSampleSpace,
     }),
     [
       similarity,
@@ -184,6 +187,7 @@ const GameProvider: React.FC<{
       history,
       backend,
       fps,
+      activeSampleSpace,
     ]
   );
 

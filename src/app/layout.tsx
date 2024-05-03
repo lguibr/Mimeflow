@@ -8,6 +8,7 @@ import AppBar from "./components/core/AppBar";
 
 import dynamic from "next/dynamic";
 import ErrorBoundary from "@/app/components/core/ErrorBoundary.jsx";
+import { useEffect } from "react";
 const Background = dynamic(() => import("@/app/components/core/Background"), {
   ssr: false,
 });
@@ -56,6 +57,26 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
+  let sw: ServiceWorkerContainer | undefined;
+
+  if (typeof window !== "undefined") {
+    sw = window?.navigator?.serviceWorker;
+  }
+  useEffect(() => {
+    if (sw) {
+      sw.register("/sw.js", { scope: "/" })
+        .then((registration) => {
+          console.log(
+            "Service Worker registration successful with scope: ",
+            registration.scope
+          );
+        })
+        .catch((err) => {
+          console.log("Service Worker registration failed: ", err);
+        });
+    }
+  }, [sw]);
+
   return (
     <html>
       <head>

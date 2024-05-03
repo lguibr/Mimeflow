@@ -90,4 +90,4 @@ Mime Flow is still in its early stages, and we are open to all contributions! If
 
 ### License:
 
-Mime Flow is distributed under the MIT License. See the `LICENSE` file for more information.
+Mime Flow is distributed under the MIT License. See the [LICENSE](LICENSE) file for more information.

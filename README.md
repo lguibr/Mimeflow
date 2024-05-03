@@ -50,6 +50,40 @@ Set up Mime Flow on your local system with these simple steps:
 - **Pose Estimation:** TensorFlow.js, BlazePose
 - **State Management:** React Context API
 
+### Pose Similarity Calculation
+
+Our enhanced pose similarity calculation method uses detailed features for a more precise assessment, crucial for various real-world applications. Key aspects include:
+
+- **Cosine Similarity in a Five-Dimensional Vector**: We analyze positions and angles of connected 3D keypoints in spherical coordinates.
+- **Weighted by Model Confidence**: Feature weighting is adjusted by the model’s confidence score on a normalized scale from 0 to 1.
+- **Sigmoid Transformation for Human Stances**: A sigmoid transformation, centered at 0.8 with a curvature of 8, emphasizes similarities in typical human stances, such as standing, enhancing match accuracy and reducing noise.
+
+### Enhanced UI Features
+
+Our user interface offers engaging features for an enhanced interaction experience:
+
+- **Stars Spherical Panorama**: Navigate a panoramic view using various controls, featuring dynamic, light-reflecting spheres for visual appeal.
+- **3D Pose Drawing Using WebGL**: Visualize poses in 3D with helpful guides like axis and a cubic grid, supporting webcam and video tracked poses.
+- **Dynamic Coloring and Sketching**: Colors for sketches are generated using Perlin noise for a natural look.
+- **2D Overlay Sketch**: Enhances visibility and understanding of poses with an additional sketch layer.
+
+### Performance and Dynamic Frame Ratio
+
+Optimized for devices of all specifications, our app adapts its performance dynamically:
+
+- **Dynamic Frame Handling**: Starts with a 1:1 frame processing ratio and adjusts based on device capability to maintain optimal performance.
+- **Non-Blocking Video Performance**: Ensures responsiveness, even on lower-spec devices.
+- **Optimized Rendering Technologies**: Prioritizes WebGPU, with fallbacks to WebAssembly and WebGL, supported by MediaPipe and TensorFlow.js for efficiency.
+
+### Security and Offline Capability
+
+We prioritize security with all processing done locally, offering offline functionality:
+
+- **Client-Side Processing**: No data leaves your device, ensuring privacy and reducing latency.
+- **Offline Functionality**: Operates as a Progressive Web App (PWA), functional without an internet connection and easily accessible from your device’s home screen.
+
+By leveraging advanced web technologies, our application ensures a secure, responsive, and user-friendly experience for all users.
+
 ### Contributing:
 
 Mime Flow is still in its early stages, and we are open to all contributions! If you have ideas on how to improve it, please fork the project, make your changes, and submit a pull request. Don't hesitate to create issues if you encounter any problems. Your involvement truly makes a difference!

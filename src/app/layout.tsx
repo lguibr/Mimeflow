@@ -7,6 +7,7 @@ import { SettingsProvider } from "./contexts/Settings";
 import AppBar from "./components/core/AppBar";
 
 import dynamic from "next/dynamic";
+import ErrorBoundary from "@/app/components/core/ErrorBoundary.jsx";
 const Background = dynamic(() => import("@/app/components/core/Background"), {
   ssr: false,
 });
@@ -61,20 +62,22 @@ export default function RootLayout({
         <title>MimeFlow 0.1 - The Pose Matching Application</title>
       </head>
       <body>
-        <StyledComponentsRegistry>
-          <SettingsProvider>
-            <GlobalStyles />
-            <CoreProvider>
-              <Container>
-                <Background />
-                <AppBar />
-                <WebcamPoseTracking />
+        <ErrorBoundary fallback={<p>Something went wrong</p>}>
+          <StyledComponentsRegistry>
+            <SettingsProvider>
+              <GlobalStyles />
+              <CoreProvider>
+                <Container>
+                  <Background />
+                  <AppBar />
+                  <WebcamPoseTracking />
 
-                {children}
-              </Container>
-            </CoreProvider>
-          </SettingsProvider>
-        </StyledComponentsRegistry>
+                  {children}
+                </Container>
+              </CoreProvider>
+            </SettingsProvider>
+          </StyledComponentsRegistry>
+        </ErrorBoundary>
       </body>
     </html>
   );

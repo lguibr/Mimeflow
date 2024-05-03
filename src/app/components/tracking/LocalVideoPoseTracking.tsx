@@ -73,8 +73,19 @@ const VideoPoseTracking: React.FC = () => {
         p.resizeCanvas(width || 1, height || 1);
       };
 
-      p.draw = async () => {
+      p.draw = () => {
         if (video && (video as any).loadedmetadata) {
+          if (p.frameCount % processingFrameRate.current === 0) {
+            net
+              ?.estimatePoses(video.elt as HTMLVideoElement)
+              .then((detectedPoses) => {
+                if (detectedPoses && detectedPoses.length > 0) {
+                  setPoses(detectedPoses);
+                  keyPoints.current = detectedPoses[0].keypoints;
+                }
+              });
+          }
+
           const containerWidth = p5ContainerRef.current?.offsetWidth || 1;
           const containerHeight = p5ContainerRef.current?.offsetHeight || 1;
           const videoWidth = (video as any).width;
@@ -90,21 +101,11 @@ const VideoPoseTracking: React.FC = () => {
           const x = (containerWidth - displayWidth) / 2;
           const y = (containerHeight - displayHeight) / 2;
 
-          const detectedPoses =
-            p.frameCount % processingFrameRate.current === 0
-              ? await net?.estimatePoses(video.elt as HTMLVideoElement)
-              : undefined;
-
           p.clear();
 
           p.image(video, x, y, displayWidth, displayHeight);
           if (keyPoints.current && keyPoints.current.length > 0)
             draw2DKeyPoints(p, keyPoints.current, scaleFactor, x, y);
-
-          if (detectedPoses && detectedPoses.length > 0) {
-            setPoses(detectedPoses);
-            keyPoints.current = detectedPoses[0].keypoints;
-          }
 
           if (
             video.elt.duration - 0.2 <= video.elt.currentTime ||
@@ -128,12 +129,8 @@ const VideoPoseTracking: React.FC = () => {
   }, [file, net, push, setPoses, togglePause]);
 
   useEffect(() => {
-    if (
-      activeSampleSpace &&
-      processingFrameRate.current !== activeSampleSpace
-    ) {
+    if (activeSampleSpace && processingFrameRate.current !== activeSampleSpace)
       processingFrameRate.current = activeSampleSpace;
-    }
   }, [activeSampleSpace]);
 
   useEffect(() => {

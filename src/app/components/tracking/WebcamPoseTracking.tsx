@@ -53,9 +53,24 @@ const PoseTracking: React.FC = () => {
         p.resizeCanvas(width, height);
       };
 
-      p.draw = async () => {
+      p.draw = () => {
         if (video && (video as any).loadedmetadata) {
           const start = Date.now();
+          if (p.frameCount % processingFrameRate.current === 0) {
+            net
+              ?.estimatePoses(video.elt as HTMLVideoElement)
+              .then((detectedPoses) => {
+                if (detectedPoses && detectedPoses.length > 0) {
+                  const end = Date.now();
+                  const time = end - start;
+                  const fps = 1000 / time;
+                  if ((p.frameCount % 10) * processingFrameRate.current === 0)
+                    setFps(fps);
+                  setPoses(detectedPoses);
+                  keyPoints.current = detectedPoses[0]?.keypoints;
+                }
+              });
+          }
           const containerHeight = p5ContainerRef.current?.offsetHeight || 1;
           const containerWidth = p5ContainerRef.current?.offsetWidth || 1;
           const videoWidth = (video as any).width;
@@ -75,27 +90,13 @@ const PoseTracking: React.FC = () => {
           const x = (p.width - scaledWidth) / 2;
           const y = 0;
 
-          const detectedPoses =
-            p.frameCount % processingFrameRate.current === 0
-              ? await net?.estimatePoses(video.elt as HTMLVideoElement)
-              : undefined;
-
           p.clear();
           p.translate(p.width, 0); // Move the origin to the right side of the canvas
           p.scale(-1, 1); // Flip the canvas horizontally
           p.image(video, x, y, scaledWidth, scaledHeight);
+
           if (keyPoints?.current)
             draw2DKeyPoints(p, keyPoints.current, scaleRatio, x, y);
-
-          if (detectedPoses && detectedPoses.length > 0) {
-            const end = Date.now();
-            const time = end - start;
-            const fps = 1000 / time;
-            if ((p.frameCount % 10) * processingFrameRate.current === 0)
-              setFps(fps);
-            setPoses(detectedPoses);
-            keyPoints.current = detectedPoses[0]?.keypoints;
-          }
         }
       };
     };

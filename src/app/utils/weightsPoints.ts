@@ -1,0 +1,40 @@
+export interface IKeypoint3DWeight {
+  weight?: number;
+  name?: string;
+}
+const weightPoints: IKeypoint3DWeight[] = [
+  { name: "nose", weight: 1 },
+  { name: "left_eye_inner", weight: 0.5 },
+  { name: "left_eye", weight: 0.5 },
+  { name: "left_eye_outer", weight: 0.5 },
+  { name: "right_eye_inner", weight: 0.5 },
+  { name: "right_eye", weight: 0.5 },
+  { name: "right_eye_outer", weight: 0.5 },
+  { name: "left_ear", weight: 0.5 },
+  { name: "right_ear", weight: 0.5 },
+  { name: "mouth_left", weight: 0.5 },
+  { name: "mouth_right", weight: 0.5 },
+  { name: "left_shoulder", weight: 1 },
+  { name: "right_shoulder", weight: 1 },
+  { name: "left_elbow", weight: 1 },
+  { name: "right_elbow", weight: 1 },
+  { name: "left_wrist", weight: 1 },
+  { name: "right_wrist", weight: 1 },
+  { name: "left_pinky", weight: 0.5 },
+  { name: "right_pinky", weight: 0.5 },
+  { name: "left_index", weight: 0.5 },
+  { name: "right_index", weight: 0.5 },
+  { name: "left_thumb", weight: 0.5 },
+  { name: "right_thumb", weight: 0.5 },
+  { name: "left_hip", weight: 1 },
+  { name: "right_hip", weight: 1 },
+  { name: "left_knee", weight: 1 },
+  { name: "right_knee", weight: 1 },
+  { name: "left_ankle", weight: 1 },
+  { name: "right_ankle", weight: 1 },
+  { name: "left_heel", weight: 0.5 },
+  { name: "right_heel", weight: 0.5 },
+  { name: "left_foot_index", weight: 0.5 },
+  { name: "right_foot_index", weight: 0.5 },
+];
+export default weightPoints;

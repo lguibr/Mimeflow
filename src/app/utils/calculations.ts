@@ -1,5 +1,6 @@
 import * as tf from "@tensorflow/tfjs-core";
 import * as poseDetection from "@tensorflow-models/pose-detection";
+import weightPoints from "@/app/utils/weightsPoints";
 
 export interface IKeypoint3D {
   x: number;
@@ -13,23 +14,77 @@ export const connections = poseDetection.util.getAdjacentPairs(
   poseDetection.SupportedModels.BlazePose
 );
 
+function getKeypointByName<T extends { name?: string }>(
+  keypoints: T[],
+  name: string
+): T | undefined {
+  return keypoints.find((keypoint) => keypoint.name === name);
+}
+
+function findMidpoint(point1: IKeypoint3D, point2: IKeypoint3D): IKeypoint3D {
+  return {
+    x: (point1.x + point2.x) / 2,
+    y: (point1.y + point2.y) / 2,
+    z: ((point1.z || 0) + (point2.z || 0)) / 2,
+  };
+}
+
+const getHipsMiddlePoint = (points: IKeypoint3D[]): IKeypoint3D => {
+  const rightHip = getKeypointByName<IKeypoint3D>(points, "right_hip");
+  const leftHip = getKeypointByName<IKeypoint3D>(points, "right_hip");
+  if (rightHip && leftHip) return findMidpoint(leftHip, rightHip);
+  return {
+    x: 0,
+    y: 0,
+    z: 0,
+  };
+};
+
+const getShoulderMiddlePoint = (points: IKeypoint3D[]) => {
+  const rightShoulder = getKeypointByName<IKeypoint3D>(
+    points,
+    "right_shoulder"
+  );
+  const leftShoulder = getKeypointByName<IKeypoint3D>(points, "left_shoulder");
+  if (rightShoulder && leftShoulder)
+    return findMidpoint(leftShoulder, rightShoulder);
+  return {
+    x: 0,
+    y: 0,
+    z: 0,
+  };
+};
+
+const getCenterPoint = (points: IKeypoint3D[]): IKeypoint3D => {
+  const hipsMiddlePoint = getHipsMiddlePoint(points);
+  const shoulderMiddlePoint = getShoulderMiddlePoint(points);
+  return findMidpoint(hipsMiddlePoint, shoulderMiddlePoint);
+};
+
+function centralizePoints(
+  keypoints: IKeypoint3D[],
+  centerPoint: IKeypoint3D
+): IKeypoint3D[] {
+  return keypoints.map((keypoint) => ({
+    ...keypoint,
+    x: keypoint.x - centerPoint.x,
+    y: keypoint.y - centerPoint.y,
+    z: keypoint.z !== undefined ? keypoint.z - (centerPoint.z ?? 0) : undefined,
+  }));
+}
+
 export function cosineSimilarity(
-  poseOne: IKeypoint3D[],
-  poseTwo: IKeypoint3D[],
-  method: "current" | "noAngles" | "allPermutations"
+  unCentralizedPoseOne: IKeypoint3D[],
+  unCentralizedPoseTwo: IKeypoint3D[]
 ): number {
-  const featuresOne =
-    method === "current"
-      ? extractFeaturesFromKeypoints(poseOne)
-      : method === "noAngles"
-      ? extractFeaturesFromKeypointsNoAngles(poseOne)
-      : extractFeaturesFromKeypointsAllPermutations(poseOne);
-  const featuresTwo =
-    method === "current"
-      ? extractFeaturesFromKeypoints(poseTwo)
-      : method === "noAngles"
-      ? extractFeaturesFromKeypointsNoAngles(poseTwo)
-      : extractFeaturesFromKeypointsAllPermutations(poseTwo);
+  const newPoseOneCenter = getCenterPoint(unCentralizedPoseOne);
+  const newPoseTwoCenter = getCenterPoint(unCentralizedPoseTwo);
+
+  const poseOne = centralizePoints(unCentralizedPoseOne, newPoseOneCenter);
+  const poseTwo = centralizePoints(unCentralizedPoseTwo, newPoseTwoCenter);
+
+  const featuresOne = extractFeaturesFromKeypoints(poseOne);
+  const featuresTwo = extractFeaturesFromKeypoints(poseTwo);
 
   const tensorOne = tf.tensor(featuresOne);
   const tensorTwo = tf.tensor(featuresTwo);
@@ -50,12 +105,18 @@ export function cosineSimilarity(
 export function extractFeaturesFromKeypoints(
   keypoints: IKeypoint3D[]
 ): number[] {
-  const features: number[] = keypoints.flatMap((keypoint, index) => {
-    const score = keypoint.score || 1;
+  const features: number[] = keypoints.flatMap((keypoint, _index) => {
+    const scoreWeighted = keypoint.score || 1;
+    const defaultWeighPoint = keypoint.name
+      ? getKeypointByName(weightPoints, keypoint.name)
+      : undefined;
+    const defaultWeight = defaultWeighPoint?.weight
+      ? defaultWeighPoint.weight
+      : 1;
     return [
-      keypoint.x * score,
-      keypoint.y * score,
-      (keypoint.z || 0) * score,
+      keypoint.x * scoreWeighted * defaultWeight,
+      keypoint.y * scoreWeighted * defaultWeight,
+      (keypoint.z || 0) * scoreWeighted * defaultWeight,
     ].map((feature) => feature);
   });
 
@@ -72,67 +133,15 @@ export function extractFeaturesFromKeypoints(
         keypointTwo,
         keypointThree
       );
-      const scores = [
+
+      const scoreWeighted = [
         keypointOne.score,
         keypointTwo.score,
         keypointThree.score,
       ].map((s) => s || 1);
-      const averageScore = (scores[0] + scores[1] + scores[2]) / 3;
-      if (averageScore >= 0.5) {
-        features.push(phi * averageScore, theta * averageScore);
-      } else {
-        features.push(0, 0);
-      }
-    }
-  });
 
-  return features;
-}
-
-export function extractFeaturesFromKeypointsNoAngles(
-  keypoints: IKeypoint3D[]
-): number[] {
-  return keypoints.flatMap((keypoint) => {
-    const score = keypoint.score || 1;
-    return [
-      keypoint.x * score,
-      keypoint.y * score,
-      (keypoint.z || 0) * score,
-    ].map((feature) => (score < 0.5 ? 0 : feature));
-  });
-}
-
-export function extractFeaturesFromKeypointsAllPermutations(
-  keypoints: IKeypoint3D[]
-): number[] {
-  const features: number[] = keypoints.flatMap((keypoint, index) => {
-    const score = keypoint.score || 1;
-    return [
-      keypoint.x * score,
-      keypoint.y * score,
-      (keypoint.z || 0) * score,
-    ].map((feature) => (score < 0.5 ? 0 : feature));
-  });
-
-  const angleTriples = generateAllPermutations(keypoints.length, 3);
-  angleTriples.forEach((triple) => {
-    const [firstIndex, secondIndex, thirdIndex] = triple;
-    const keypointOne = keypoints[firstIndex];
-    const keypointTwo = keypoints[secondIndex];
-    const keypointThree = keypoints[thirdIndex];
-
-    if (keypointOne && keypointTwo && keypointThree) {
-      const { phi, theta } = calculateSphericalAngles(
-        keypointOne,
-        keypointTwo,
-        keypointThree
-      );
-      const scores = [
-        keypointOne.score,
-        keypointTwo.score,
-        keypointThree.score,
-      ].map((s) => s || 1);
-      const averageScore = (scores[0] + scores[1] + scores[2]) / 3;
+      const averageScore =
+        (scoreWeighted[0] + scoreWeighted[1] + scoreWeighted[2]) / 3;
       if (averageScore >= 0.5) {
         features.push(phi * averageScore, theta * averageScore);
       } else {

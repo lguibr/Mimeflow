@@ -54,7 +54,8 @@ Set up Mime Flow on your local system with these simple steps:
 
 Our enhanced pose similarity calculation method uses detailed features for a more precise assessment, crucial for various real-world applications. Key aspects include:
 
-- **Cosine Similarity in a Five-Dimensional Vector**: We analyze positions and angles of connected 3D keypoints in spherical coordinates.
+- **Centralize axis in user center**: Uses the center point between shoulders and hips as origin of the coordinates to improve the propagation of poses.
+- **Cosine Similarity in a Five-Dimensional Vector**: We analyze positions and angles of connected 3D points in spherical coordinates.
 - **Weighted by Model Confidence**: Feature weighting is adjusted by the model’s confidence score on a normalized scale from 0 to 1.
 - **Sigmoid Transformation for Human Stances**: A sigmoid transformation, centered at 0.8 with a curvature of 8, emphasizes similarities in typical human stances, such as standing, enhancing match accuracy and reducing noise.
 

@@ -81,11 +81,7 @@ const GameProvider: React.FC<{
   useEffect(() => {
     if (webcamPoints3d.length > 0 && videoPoints3d.length > 0) {
       if (!isPaused) {
-        const similarity = cosineSimilarity(
-          webcamPoints3d,
-          videoPoints3d,
-          "current"
-        );
+        const similarity = cosineSimilarity(webcamPoints3d, videoPoints3d);
         const sigmoidedSimilarity = sigmoidTransformAdjusted(
           similarity,
           5,

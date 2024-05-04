@@ -8,10 +8,7 @@ import React, {
 import styled from "styled-components";
 import { useFile } from "@/app/contexts/File";
 import Logo from "../core/Logo";
-
-type Props = {
-  dragging: boolean;
-};
+import { useSnackbar } from "@/app/contexts/Snackbar";
 
 const DragDrop = styled.div<{ $dragging: boolean }>`
   border: ${({ $dragging }) =>
@@ -45,6 +42,7 @@ const VideoUpload: React.FC = () => {
   const [dragging, setDragging] = useState(false);
 
   const { file, setFile, setHash } = useFile();
+  const { showMessage } = useSnackbar();
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   const handleDragOver = useCallback((e: DragEvent<HTMLDivElement>) => {
@@ -60,17 +58,28 @@ const VideoUpload: React.FC = () => {
     (e: DragEvent<HTMLDivElement>) => {
       e.preventDefault();
       setDragging(false);
-      if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
-        const droppedFile = e.dataTransfer.files[0];
-        if (droppedFile.type.startsWith("video/")) {
-          setFile(droppedFile);
-        } else {
-          console.log("File is not a video");
+      try {
+        console.log("File dropped");
+
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          const droppedFile = e.dataTransfer.files[0];
+          if (droppedFile.type.startsWith("video/")) {
+            console.log("File is a video");
+
+            showMessage("File uploaded successfully", "success");
+            setFile(droppedFile);
+          } else {
+            console.log("File is not a video");
+            showMessage("File is not a video", "success");
+          }
+          e.dataTransfer.clearData();
         }
-        e.dataTransfer.clearData();
+      } catch (e) {
+        console.log(e);
+        showMessage("Error uploading file", "error");
       }
     },
-    [setFile]
+    [setFile, showMessage]
   );
 
   const handleClick = () => {
@@ -79,13 +88,20 @@ const VideoUpload: React.FC = () => {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const fileList = e.target.files;
-    if (fileList && fileList.length > 0) {
-      const selectedFile = fileList[0];
-      if (selectedFile.type.startsWith("video/")) {
-        setFile(selectedFile);
-      } else {
-        console.log("File is not a video");
+    try {
+      if (fileList && fileList.length > 0) {
+        const selectedFile = fileList[0];
+        if (selectedFile.type.startsWith("video/")) {
+          showMessage("File uploaded successfully", "success");
+          setFile(selectedFile);
+        } else {
+          console.log("File is not a video");
+          showMessage("File is not a video", "success");
+        }
       }
+    } catch (e) {
+      console.log(e);
+      showMessage("Error uploading file", "error");
     }
   };
 
@@ -115,7 +131,9 @@ const VideoUpload: React.FC = () => {
         <p>File ready: {file.name}</p>
       ) : (
         <>
-          <h3>Drag and drop a video file here, or click to select a file.</h3>
+          <h3>
+            Drag and drop a video file here, or click to select a video file.
+          </h3>
           <Logo />
           <h4>
             The Mime Flow will initialized automatically after upload the file

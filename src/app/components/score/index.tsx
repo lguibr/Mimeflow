@@ -11,6 +11,8 @@ import { db } from "@/app/services/dexie";
 import ReplayIcon from "../core/Replay";
 import { useEffect } from "react";
 import HomeIcon from "../core/HomeIcon";
+import { useSnackbar } from "@/app/contexts/Snackbar";
+
 const ScoreView: React.FC = () => {
   const { push } = useRouter();
   const { setFile, hash } = useFile();
@@ -27,9 +29,6 @@ const ScoreView: React.FC = () => {
     setScore(0);
     togglePause(true);
   };
-  if (!score) {
-    return null;
-  }
 
   const restartGame = () => {
     resetGame();
@@ -41,6 +40,19 @@ const ScoreView: React.FC = () => {
     resetGame();
     push("/");
   };
+  const { showMessage } = useSnackbar();
+  useEffect(() => {
+    const debounce = setTimeout(() => {
+      if (!scoreForCurrentHash?.score || scoreForCurrentHash?.score < score) {
+        showMessage("New high score!", "success");
+      }
+    }, 1000);
+    return () => clearTimeout(debounce);
+  }, [score, scoreForCurrentHash?.score, showMessage]);
+
+  if (!score) {
+    return null;
+  }
 
   return (
     <Container>

@@ -107,7 +107,6 @@ const GameProvider: React.FC<{
       await tf.ready();
       const currentBackend = await tf.getBackend();
       setBackend(currentBackend);
-
       const is2k = () =>
         typeof window !== "undefined" && window.innerWidth >= 2560;
 
@@ -133,9 +132,12 @@ const GameProvider: React.FC<{
       webcamNetRef.current = webcam;
       setLoaded(true);
     };
-
-    if (!videoNetRef.current && !webcamNetRef.current) loadPoseNet();
-  }, []);
+    const debounced = setTimeout(() => {
+      if (!videoNetRef.current && !webcamNetRef.current && !loaded)
+        loadPoseNet();
+    }, 200);
+    return () => clearTimeout(debounced);
+  }, [loaded]);
 
   useEffect(() => {
     !isPaused && setHistory((prev) => [...prev, score]);

@@ -37,9 +37,4 @@ const nextConfig = {
   compiler: { styledComponents: true },
 }
 
-module.exports = withPWA({
-  ...nextConfig,
-  experimental: {
-    appDir: true,
-  },
-});
+module.exports = withPWA(nextConfig);

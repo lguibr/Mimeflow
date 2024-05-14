@@ -1,5 +1,6 @@
 "use client";
 import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/react";
 
 import styled, { createGlobalStyle } from "styled-components";
 import StyledComponentsRegistry from "./lib/registry";
@@ -94,6 +95,7 @@ export default function RootLayout({
                   <AppBar />
                   <WebcamPoseTracking />
                   <SpeedInsights />
+                  <Analytics />
                   {children}
                 </Container>
               </CoreProvider>

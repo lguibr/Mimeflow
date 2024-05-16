@@ -168,6 +168,25 @@ const Container = styled.div`
   height: 100%;
   width: 100%;
   border-radius: 50%;
+  :after {
+    content: "";
+    width: 100%;
+    height: 100%;
+    position: absolute;
+    z-index: 999999;
+    top: 0;
+    left: 0;
+    border-radius: 50%;
+    border: 1px solid #000626ff;
+    background: radial-gradient(
+      circle,
+      rgba(255, 255, 255, 0) 0%,
+      rgba(255, 255, 255, 0) 40%,
+      #00062644 60%,
+      #000626dd 80%,
+      #000626ff 100%
+    );
+  }
 `;
 
 const CanvasContainer = styled.div`

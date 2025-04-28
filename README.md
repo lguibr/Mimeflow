@@ -1,5 +1,10 @@
 # Mime Flow 🕺💃
 
+<p align="center">
+  <img src="bitmap.png" alt="Logo" width="300"/>
+</p>
+
+
 Welcome to **Mime Flow**! This alpha version of our versatile pose matching application lets you engage interactively to practice and perfect your poses across various disciplines, from dance to martial arts, and yoga. Powered by cutting-edge technology, it's designed to adapt to your skills, helping you refine your movements with precision.
 
 ### How to Play:

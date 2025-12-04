@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { Innertube } from "youtubei.js";
+import { Innertube, UniversalCache } from "youtubei.js";
 
 export const runtime = "nodejs";
 
@@ -15,7 +15,12 @@ export async function GET(request: NextRequest) {
   }
 
   try {
-    const innertube = await Innertube.create();
+    // Disable cache to prevent file system write errors in Vercel
+    const innertube = await Innertube.create({
+      cache: new UniversalCache(false),
+      generate_session_locally: true,
+    });
+
     const videoInfo = await innertube.getInfo(videoId, { client: "ANDROID" });
 
     // Filter for MP4 formats to ensure compatibility (avoid VP9/WebM issues)
@@ -42,10 +47,14 @@ export async function GET(request: NextRequest) {
         "Access-Control-Allow-Origin": "*",
       },
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Error fetching YouTube info:", error);
     return NextResponse.json(
-      { error: "Failed to fetch video info" },
+      {
+        error: "Failed to fetch video info",
+        details: error.message || String(error),
+        stack: error.stack,
+      },
       { status: 500 }
     );
   }

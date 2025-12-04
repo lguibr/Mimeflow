@@ -1,5 +1,5 @@
-const withPWA = require('next-pwa')({
-  dest: 'public',
+const withPWA = require("next-pwa")({
+  dest: "public",
   reloadOnOnline: true,
   cacheOnFrontEndNav: true,
   navigationPreload: true,
@@ -7,9 +7,9 @@ const withPWA = require('next-pwa')({
   runtimeCaching: [
     {
       urlPattern: /^https?.*/,
-      handler: 'NetworkFirst',
+      handler: "NetworkFirst",
       options: {
-        cacheName: 'offlineCache',
+        cacheName: "offlineCache",
         expiration: {
           maxEntries: 200,
         },
@@ -17,9 +17,9 @@ const withPWA = require('next-pwa')({
     },
     {
       urlPattern: /^http?.*/,
-      handler: 'NetworkFirst',
+      handler: "NetworkFirst",
       options: {
-        cacheName: 'offlineCache',
+        cacheName: "offlineCache",
         expiration: {
           maxEntries: 200,
         },
@@ -31,10 +31,11 @@ const withPWA = require('next-pwa')({
   dynamicStartUrl: true,
   skipWaiting: true,
 
-})
+  disable: process.env.NODE_ENV === "development",
+});
 
 const nextConfig = {
   compiler: { styledComponents: true },
-}
+};
 
 module.exports = withPWA(nextConfig);

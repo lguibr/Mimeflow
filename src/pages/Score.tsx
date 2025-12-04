@@ -1,12 +1,8 @@
-"use client";
-
-import dynamic from "next/dynamic";
+import React from "react";
 import Grid from "@/app/components/core/Grid";
-const ScoreView = dynamic(() => import("@/app/components/score"), {
-  ssr: false,
-});
+import ScoreView from "@/app/components/score";
 
-const ScorePaGe: React.FC = () => {
+const ScorePage: React.FC = () => {
   return (
     <main>
       <Grid gridSpan={{ xs: [1, 13], sm: [1, 13], md: [3, 11], lg: [4, 10] }}>
@@ -16,4 +12,4 @@ const ScorePaGe: React.FC = () => {
   );
 };
 
-export default ScorePaGe;
+export default ScorePage;

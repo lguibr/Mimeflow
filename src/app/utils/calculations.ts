@@ -1,4 +1,3 @@
-import weightPoints from "@/app/utils/weightsPoints";
 import { PoseLandmarker } from "@mediapipe/tasks-vision";
 
 export interface IKeypoint3D {
@@ -13,13 +12,6 @@ export interface IKeypoint3D {
 
 // MediaPipe Pose Connections
 export const connections = PoseLandmarker.POSE_CONNECTIONS;
-
-function getKeypointByName<T extends { name?: string }>(
-  keypoints: T[],
-  name: string
-): T | undefined {
-  return keypoints.find((keypoint) => keypoint.name === name);
-}
 
 function findMidpoint(point1: IKeypoint3D, point2: IKeypoint3D): IKeypoint3D {
   return {
@@ -110,7 +102,7 @@ export function cosineSimilarity(
 export function extractFeaturesFromKeypoints(
   keypoints: IKeypoint3D[]
 ): number[] {
-  const features: number[] = keypoints.flatMap((keypoint, index) => {
+  const features: number[] = keypoints.flatMap((keypoint) => {
     // We can't rely on names anymore if we just pass the array.
     // We should probably use index based weights if needed, or just default to 1.
     // For now, let's assume default weight 1 if name lookup fails.

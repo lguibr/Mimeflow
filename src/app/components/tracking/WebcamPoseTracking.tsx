@@ -35,14 +35,12 @@ const PoseTracking: React.FC<PoseTrackingProps> = ({
     typeof window !== "undefined" && window.innerWidth >= 1024;
 
   useEffect(() => {
-    console.log("WebcamPoseTracking: Sketch Effect Running", { net: !!net });
     const frameRate = isDesktop() ? 60 : 30;
 
     let video: p5.Element;
     let scaleRatio = 1;
     const sketch = (p: p5) => {
       p.setup = () => {
-        console.log("WebcamPoseTracking: p.setup");
         const { width, height } =
           p5ContainerRef.current!.getBoundingClientRect();
         p.createCanvas(width, height).parent(p5ContainerRef.current!);
@@ -54,9 +52,11 @@ const PoseTracking: React.FC<PoseTrackingProps> = ({
       };
 
       p.windowResized = () => {
-        const { width, height } =
-          p5ContainerRef.current!.getBoundingClientRect();
-        p.resizeCanvas(width, height);
+        if (p5ContainerRef.current) {
+          const { width, height } =
+            p5ContainerRef.current.getBoundingClientRect();
+          p.resizeCanvas(width, height);
+        }
       };
 
       p.draw = () => {
@@ -64,15 +64,8 @@ const PoseTracking: React.FC<PoseTrackingProps> = ({
         if (video && (video as any).loadedmetadata) {
           // Log only once every 60 frames to avoid spam
           if (p.frameCount % 60 === 0) {
-            console.log("WebcamPoseTracking: Drawing frame", {
-              videoWidth: (video as any).width,
-              videoHeight: (video as any).height,
-              canvasWidth: p.width,
-              canvasHeight: p.height,
-            });
           }
 
-          const start = Date.now();
           if (p.frameCount % processingFrameRate.current === 0) {
             if (net) {
               const detectedPoses = net.detectForVideo(
@@ -151,13 +144,6 @@ const PoseTracking: React.FC<PoseTrackingProps> = ({
           const y = 0;
 
           if (p.frameCount % 60 === 0) {
-            console.log("WebcamPoseTracking: Draw Params", {
-              x,
-              y,
-              scaledWidth,
-              scaledHeight,
-              scaleRatio,
-            });
           }
 
           p.clear();
@@ -184,11 +170,7 @@ const PoseTracking: React.FC<PoseTrackingProps> = ({
             }
           }
         } else {
-          if (p.frameCount % 60 === 0)
-            console.log("WebcamPoseTracking: Video not ready", {
-              video: !!video,
-              loadedmetadata: video && (video as any).loadedmetadata,
-            });
+          // Video not ready
         }
       };
     };
@@ -196,7 +178,6 @@ const PoseTracking: React.FC<PoseTrackingProps> = ({
     p5InstanceRef.current = new p5(sketch);
 
     return () => {
-      console.log("WebcamPoseTracking: Cleanup");
       if (video) {
         video.remove();
         if (video.elt) video.elt.remove();

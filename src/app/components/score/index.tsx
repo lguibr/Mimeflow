@@ -1,6 +1,6 @@
 "use client";
 
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
 import { useGameActions, useGameViews } from "@/app/contexts/Game";
 import { useFile } from "@/app/contexts/File";
@@ -14,7 +14,7 @@ import HomeIcon from "../core/HomeIcon";
 import { useSnackbar } from "@/app/contexts/Snackbar";
 
 const ScoreView: React.FC = () => {
-  const { push } = useRouter();
+  const navigate = useNavigate();
   const { setFile, hash } = useFile();
   const { score } = useGameViews();
   const { togglePause, setHistory, setScore } = useGameActions();
@@ -32,13 +32,13 @@ const ScoreView: React.FC = () => {
 
   const restartGame = () => {
     resetGame();
-    push("/tracking");
+    navigate("/tracking");
   };
 
   const goHome = () => {
     setFile(null);
     resetGame();
-    push("/");
+    navigate("/");
   };
   const { showMessage } = useSnackbar();
   useEffect(() => {

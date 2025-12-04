@@ -83,7 +83,7 @@ const GameProvider: React.FC<{
 
   const [loaded, setLoaded] = useState<boolean>(false);
   const [history, setHistory] = useState<number[]>([]);
-  const [backend, setBackend] = useState<string | undefined>("mediapipe-tasks");
+  const [backend] = useState<string | undefined>("mediapipe-tasks");
   const [fps, setFps] = useState<number | undefined>();
 
   // Extract 3D keypoints from the first detected pose
@@ -112,20 +112,10 @@ const GameProvider: React.FC<{
   useEffect(() => {
     if (webcamPoints3d.length > 0 && videoPoints3d.length > 0) {
       if (!isPaused) {
-        console.log("Game: Calculating similarity", {
-          webcamPoints: webcamPoints3d.length,
-          videoPoints: videoPoints3d.length,
-        });
-
         // Mirror the webcam points to match the user's mirrored view
         // This ensures that if the user raises their right hand (screen right),
         // it matches the dancer's left hand (screen right).
         const mirroredWebcamPoints = mirrorLandmarks(webcamPoints3d);
-
-        console.log("Game: Mirrored Points", {
-          original: webcamPoints3d[15], // Left Wrist
-          mirrored: mirroredWebcamPoints[16], // Should be Right Wrist data (swapped) with negated X
-        });
 
         const rawSimilarity = cosineSimilarity(
           mirroredWebcamPoints,
@@ -137,11 +127,6 @@ const GameProvider: React.FC<{
           0.7
         );
 
-        console.log("Game: Similarity", {
-          raw: rawSimilarity,
-          sigmoid: sigmoidedSimilarity,
-        });
-
         setSimilarityState(sigmoidedSimilarity);
 
         const percentage = Math.round(sigmoidedSimilarity * 100);
@@ -152,12 +137,6 @@ const GameProvider: React.FC<{
 
         const sum = newHistory.reduce((a, b) => a + b, 0);
         const average = sum / newHistory.length;
-
-        console.log("Game: Updating Score", {
-          percentage,
-          average,
-          historyLength: newHistory.length,
-        });
 
         setHistory(newHistory);
         setScore(average);
@@ -178,9 +157,9 @@ const GameProvider: React.FC<{
         },
         runningMode: "VIDEO" as const,
         numPoses: 1,
-        minPoseDetectionConfidence: 0.75,
-        minPosePresenceConfidence: 0.75,
-        minTrackingConfidence: 0.75,
+        minPoseDetectionConfidence: 0.9,
+        minPosePresenceConfidence: 0.9,
+        minTrackingConfidence: 0.9,
       };
 
       const video = await PoseLandmarker.createFromOptions(
@@ -192,7 +171,6 @@ const GameProvider: React.FC<{
         poseLandmarkerOptions
       );
 
-      console.log("PoseLandmarker loaded: HEAVY Model with 0.2 threshold");
       videoNetRef.current = video;
       webcamNetRef.current = webcam;
       setLoaded(true);
@@ -242,7 +220,6 @@ const GameProvider: React.FC<{
         date: new Date(),
         history: [...currentHistory],
       });
-      console.log("Score saved successfully!");
     } catch (error) {
       console.error("Failed to save score:", error);
     }

@@ -1,6 +1,3 @@
-import React from "react";
-import styled from "styled-components";
-
 interface LogoProps {
   width?: string;
   height?: string;
@@ -25,8 +22,3 @@ const Logo: React.FC<LogoProps> = ({ width, height, className, style }) => {
 };
 
 export default Logo;
-
-const Path = styled.path<{ color: string }>`
-  fill: ${({ color }) => color};
-  stroke-width: 0.3;
-`;

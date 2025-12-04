@@ -9,8 +9,6 @@ import {
   drawPose3D,
   drawRotatingCoordinates,
 } from "@/app/utils/draw";
-import usePercentageToPixels from "@/app/hooks/usePercentageToPixels";
-import FloatingWindow from "./FloatingWindow";
 import { useSettings } from "@/app/contexts/Settings";
 
 interface Pose3DViewerProps {
@@ -26,10 +24,6 @@ const Pose3DViewer: React.FC<Pose3DViewerProps> = ({ type }) => {
   const points = useRef<any[]>(
     type === "webcam" ? webcamPoints3d : videoPoints3d
   );
-  const getPixels = usePercentageToPixels();
-  const [x0, y0] = getPixels(0, 0);
-  const [x100, y100] = getPixels(100, 100);
-  const [x30, y30] = getPixels(30, 30);
   const { videoPreview3D, webcamPreview3D } = useSettings();
 
   useEffect(() => {
@@ -92,23 +86,9 @@ const Pose3DViewer: React.FC<Pose3DViewerProps> = ({ type }) => {
   }, [type]);
 
   return webcamPreview3D && type === "webcam" ? (
-    <FloatingWindow
-      x={x100}
-      y={y0}
-      width={x30 > y30 ? y30 : x30}
-      height={x30 > y30 ? y30 : x30}
-    >
-      <CanvasContainer ref={p5ContainerRef} />;
-    </FloatingWindow>
+    <CanvasContainer ref={p5ContainerRef} />
   ) : videoPreview3D && type === "video" ? (
-    <FloatingWindow
-      x={x100}
-      y={y100}
-      width={x30 > y30 ? y30 : x30}
-      height={x30 > y30 ? y30 : x30}
-    >
-      <CanvasContainer ref={p5ContainerRef} />;
-    </FloatingWindow>
+    <CanvasContainer ref={p5ContainerRef} />
   ) : null;
 };
 

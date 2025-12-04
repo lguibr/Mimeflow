@@ -7,7 +7,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import { Home } from "lucide-react";
-import Link from "next/link";
+import { Link } from "react-router-dom";
 
 interface MainLayoutProps {
   children?: React.ReactNode;
@@ -44,7 +44,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
     <div className="h-screen w-screen flex flex-col bg-background text-foreground overflow-hidden">
       {/* Header / Breadcrumb */}
       {/* Home Button */}
-      <Link href="/" className="absolute top-4 left-4 z-50">
+      <Link to="/" className="absolute top-4 left-4 z-50">
         <button className="p-2 rounded-full bg-black/40 backdrop-blur-md border border-white/10 text-white/70 hover:text-white hover:bg-black/60 transition-all">
           <Home className="w-6 h-6" />
         </button>

@@ -1,25 +1,19 @@
-"use client";
-
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useNavigate } from "react-router-dom";
 import styled from "styled-components";
-import Logo from "./components/core/Logo";
-import dynamic from "next/dynamic";
-
-const WebcamPoseTracking = dynamic(
-  () => import("./components/tracking/WebcamPoseTracking"),
-  { ssr: false }
-);
+import { Badge } from "@/components/ui/badge";
+import Logo from "@/app/components/core/Logo";
+import WebcamPoseTracking from "@/app/components/tracking/WebcamPoseTracking";
 
 export default function Home() {
   const [url, setUrl] = useState("");
   const [visibleCount, setVisibleCount] = useState(0);
-  const router = useRouter();
+  const navigate = useNavigate();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (url) {
-      router.push(`/tracking?youtubeUrl=${encodeURIComponent(url)}`);
+      navigate(`/tracking?youtubeUrl=${encodeURIComponent(url)}`);
     }
   };
 
@@ -74,10 +68,15 @@ export default function Home() {
       <Card $progress={progress} $color={borderColor}>
         <Title>
           <Logo width="300px" height="150px" />
+          <Badge
+            variant="beta"
+            className="absolute top-0 right-0 rotate-12 translate-x-4 -translate-y-2"
+          >
+            Beta
+          </Badge>
         </Title>
         <Subtitle>
-          Upload a video or paste a YouTube link (under 1 min) to start matching
-          poses.
+          Upload a video or paste a YouTube link to start matching poses.
         </Subtitle>
 
         <Form onSubmit={handleSubmit}>
@@ -164,6 +163,7 @@ const Title = styled.h1`
   display: flex;
   justify-content: center;
   align-items: center;
+  position: relative;
 
   span.mime {
     background: #fff;

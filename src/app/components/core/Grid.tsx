@@ -1,4 +1,3 @@
-import React from "react";
 import styled from "styled-components";
 
 const breakpoints = {
@@ -18,10 +17,6 @@ const GridContainer = styled.div`
   place-items: start;
   box-sizing: border-box;
 `;
-
-interface GridContentProps {
-  gridSpan: { [key: string]: number[] };
-}
 
 const GridContent = styled.div<{ $gridSpan: { [key: string]: number[] } }>`
   display: flex;

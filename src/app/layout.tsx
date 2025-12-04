@@ -1,31 +1,25 @@
 "use client";
 import { SpeedInsights } from "@vercel/speed-insights/next";
 import { Analytics } from "@vercel/analytics/react";
+import "./globals.css";
+import { Inter, Dancing_Script } from "next/font/google";
 
 import styled, { createGlobalStyle } from "styled-components";
 import StyledComponentsRegistry from "./lib/registry";
 
 import { SettingsProvider } from "./contexts/Settings";
-import AppBar from "./components/core/AppBar";
 
 import dynamic from "next/dynamic";
 import ErrorBoundary from "@/app/components/core/ErrorBoundary.jsx";
 import { useEffect } from "react";
-const Background = dynamic(() => import("@/app/components/core/Background"), {
-  ssr: false,
+import { Toaster } from "@/components/ui/sonner";
+import CoreProvider from "./components/core/CoreProvider";
+
+const inter = Inter({ subsets: ["latin"], variable: "--font-inter" });
+const dancingScript = Dancing_Script({
+  subsets: ["latin"],
+  variable: "--font-dancing",
 });
-const CoreProvider = dynamic(
-  () => import("@/app/components/core/CoreProvider"),
-  {
-    ssr: false,
-  }
-);
-const WebcamPoseTracking = dynamic(
-  () => import("@/app/components/tracking/WebcamPoseTracking"),
-  {
-    ssr: false,
-  }
-);
 
 const GlobalStyles = createGlobalStyle`
   *,
@@ -36,21 +30,23 @@ const GlobalStyles = createGlobalStyle`
     box-sizing: border-box;
   }
   html {
-    font-size: 62.5%; /* equivalent to 10px; 1rem = 10px; 10px/16px */
+    font-size: 62.5%; 
     height: 100vh;
     width: 100vw;
     margin: 0;
     padding: 0;
-    background:#000626ff;
+    background: #0a0a0a;
   }
   body {
     box-sizing: border-box;
-    font-family: 'Muli', sans-serif;
+    font-family: var(--font-inter), sans-serif;
     height: 100vh;
     width: 100vw;
     margin: 0;
     padding: 0;
     box-sizing: border-box;
+    background: #0a0a0a;
+    color: #ffffff;
   }
 `;
 
@@ -59,28 +55,10 @@ export default function RootLayout({
 }: {
   children: React.ReactNode;
 }) {
-  let sw: ServiceWorkerContainer | undefined;
-
-  if (typeof window !== "undefined") {
-    sw = window?.navigator?.serviceWorker;
-  }
-  useEffect(() => {
-    if (sw) {
-      sw.register("/sw.js", { scope: "/" })
-        .then((registration) => {
-          console.log(
-            "Service Worker registration successful with scope: ",
-            registration.scope
-          );
-        })
-        .catch((err) => {
-          console.log("Service Worker registration failed: ", err);
-        });
-    }
-  }, [sw]);
+  // ... existing service worker logic ...
 
   return (
-    <html>
+    <html lang="en" className={`${inter.variable} ${dancingScript.variable}`}>
       <head>
         <title>MimeFlow 0.1 - The Pose Matching Application</title>
       </head>
@@ -91,12 +69,12 @@ export default function RootLayout({
               <GlobalStyles />
               <CoreProvider>
                 <Container>
-                  <Background />
-                  <AppBar />
-                  <WebcamPoseTracking />
+                  {/* <Background /> */}
+                  {/* <WebcamPoseTracking /> */}
                   <SpeedInsights />
                   <Analytics />
                   {children}
+                  <Toaster />
                 </Container>
               </CoreProvider>
             </SettingsProvider>

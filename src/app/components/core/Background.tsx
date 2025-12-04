@@ -38,8 +38,9 @@ const Background: React.FC = () => {
 
         p.push();
         p.translate(0, 0, 0);
-        p.rotateX(cameraY);
-        p.rotateY(cameraX);
+        p.translate(0, 0, 0);
+        // p.rotateX(cameraY);
+        // p.rotateY(cameraX);
 
         for (const sphere of spheres) {
           p.push();
@@ -52,14 +53,14 @@ const Background: React.FC = () => {
 
         p.pop();
 
-        p.mouseMoved = () => {
-          cameraX = p.map(p.mouseX / 2, 0, p.width, -p.PI / 2, p.PI / 2);
-          cameraY = p.map(p.mouseY / 2, 0, p.height, -p.PI / 2, p.PI / 2);
-        };
-        p.touchMoved = () => {
-          cameraX = p.map(p.mouseX / 2, 0, p.width, -p.PI / 2, p.PI / 2);
-          cameraY = p.map(p.mouseY / 2, 0, p.height, -p.PI / 2, p.PI / 2);
-        };
+        // p.mouseMoved = () => {
+        //   cameraX = p.map(p.mouseX / 2, 0, p.width, -p.PI / 2, p.PI / 2);
+        //   cameraY = p.map(p.mouseY / 2, 0, p.height, -p.PI / 2, p.PI / 2);
+        // };
+        // p.touchMoved = () => {
+        //   cameraX = p.map(p.mouseX / 2, 0, p.width, -p.PI / 2, p.PI / 2);
+        //   cameraY = p.map(p.mouseY / 2, 0, p.height, -p.PI / 2, p.PI / 2);
+        // };
       };
 
       p.windowResized = () => {
@@ -67,11 +68,11 @@ const Background: React.FC = () => {
       };
 
       const handleOrientation = (event: DeviceOrientationEvent) => {
-        const { beta, gamma } = event;
-        if (beta != null && gamma != null) {
-          cameraX = p.map(gamma, -90, 90, -p.PI / 2, p.PI / 2);
-          cameraY = p.map(beta, -180, 180, -p.PI / 2, p.PI / 2);
-        }
+        // const { beta, gamma } = event;
+        // if (beta != null && gamma != null) {
+        //   cameraX = p.map(gamma, -90, 90, -p.PI / 2, p.PI / 2);
+        //   cameraY = p.map(beta, -180, 180, -p.PI / 2, p.PI / 2);
+        // }
       };
 
       window.addEventListener("deviceorientation", handleOrientation);

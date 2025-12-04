@@ -9,6 +9,7 @@ import styled from "styled-components";
 import { useFile } from "@/app/contexts/File";
 import Logo from "../core/Logo";
 import { useSnackbar } from "@/app/contexts/Snackbar";
+import { useRouter } from "next/navigation";
 
 const DragDrop = styled.div<{ $dragging: boolean }>`
   border: ${({ $dragging }) =>
@@ -119,6 +120,16 @@ const VideoUpload: React.FC = () => {
     if (file) computeHash(file);
   }, [file, setHash]);
 
+  const [youtubeUrl, setYoutubeUrl] = useState("");
+  const router = useRouter();
+
+  const handleYoutubeStart = () => {
+    if (youtubeUrl) {
+      // Navigate to tracking with youtubeUrl param
+      router.push(`/tracking?youtubeUrl=${encodeURIComponent(youtubeUrl)}`);
+    }
+  };
+
   return (
     <DragDrop
       onClick={handleClick}
@@ -138,6 +149,26 @@ const VideoUpload: React.FC = () => {
           <h4>
             The Mime Flow will initialized automatically after upload the file
           </h4>
+
+          <Divider>OR</Divider>
+
+          <div
+            onClick={(e) => e.stopPropagation()}
+            style={{
+              display: "flex",
+              gap: "10px",
+              flexDirection: "column",
+              alignItems: "center",
+            }}
+          >
+            <Input
+              type="text"
+              placeholder="Paste YouTube URL here"
+              value={youtubeUrl}
+              onChange={(e) => setYoutubeUrl(e.target.value)}
+            />
+            <Button onClick={handleYoutubeStart}>Start with YouTube</Button>
+          </div>
         </>
       )}
       <input
@@ -152,3 +183,30 @@ const VideoUpload: React.FC = () => {
 };
 
 export default VideoUpload;
+
+const Divider = styled.div`
+  margin: 20px 0;
+  font-weight: bold;
+  font-size: 1.2rem;
+`;
+
+const Input = styled.input`
+  padding: 10px;
+  border-radius: 5px;
+  border: 1px solid #ccc;
+  width: 300px;
+  color: black;
+`;
+
+const Button = styled.button`
+  padding: 10px 20px;
+  border-radius: 5px;
+  border: none;
+  background-color: #007f8b;
+  color: white;
+  cursor: pointer;
+  font-size: 1rem;
+  &:hover {
+    background-color: #005f6b;
+  }
+`;

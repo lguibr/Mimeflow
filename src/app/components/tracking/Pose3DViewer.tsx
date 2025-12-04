@@ -1,7 +1,7 @@
 import React, { useRef, useEffect } from "react";
 import styled from "styled-components";
 import p5 from "p5";
-import * as poseDetection from "@tensorflow-models/pose-detection";
+// import * as poseDetection from "@tensorflow-models/pose-detection"; // Removed unused import
 import { useGameViews } from "@/app/contexts/Game";
 import {
   draw3DGrid,
@@ -23,7 +23,7 @@ const Pose3DViewer: React.FC<Pose3DViewerProps> = ({ type }) => {
 
   const { videoPoints3d, webcamPoints3d } = useGameViews();
   const keypoints = type === "webcam" ? webcamPoints3d : videoPoints3d;
-  const points = useRef<poseDetection.Keypoint[]>(
+  const points = useRef<any[]>(
     type === "webcam" ? webcamPoints3d : videoPoints3d
   );
   const getPixels = usePercentageToPixels();

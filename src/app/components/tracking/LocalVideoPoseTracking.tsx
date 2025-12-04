@@ -1,7 +1,6 @@
 "use client";
 
 import React, { useRef, useEffect } from "react";
-import * as poseDetection from "@tensorflow-models/pose-detection";
 import p5 from "p5";
 
 import styled from "styled-components";
@@ -13,6 +12,7 @@ import { useGameActions, useGameViews } from "@/app/contexts/Game";
 import { draw2DKeyPoints } from "@/app/utils/draw";
 import { useFile } from "@/app/contexts/File";
 import { IKeypoint3D } from "@/app/utils/calculations";
+import { PoseLandmarkerResult } from "@mediapipe/tasks-vision";
 
 const VideoPoseTracking: React.FC = () => {
   const { videoNet: net, activeSampleSpace, isPaused } = useGameViews();
@@ -76,14 +76,23 @@ const VideoPoseTracking: React.FC = () => {
       p.draw = () => {
         if (video && (video as any).loadedmetadata) {
           if (p.frameCount % processingFrameRate.current === 0) {
-            net
-              ?.estimatePoses(video.elt as HTMLVideoElement)
-              .then((detectedPoses) => {
-                if (detectedPoses && detectedPoses.length > 0) {
-                  setPoses(detectedPoses);
-                  keyPoints.current = detectedPoses[0].keypoints;
-                }
-              });
+            if (net) {
+              const detectedPoses = net.detectForVideo(
+                video.elt as HTMLVideoElement,
+                performance.now()
+              );
+              if (detectedPoses && detectedPoses.landmarks.length > 0) {
+                setPoses(detectedPoses);
+                // Denormalize landmarks to video pixel coordinates
+                const videoW = (video as any).width;
+                const videoH = (video as any).height;
+                keyPoints.current = detectedPoses.landmarks[0].map((kp) => ({
+                  ...kp,
+                  x: kp.x * videoW,
+                  y: kp.y * videoH,
+                })) as unknown as IKeypoint3D[];
+              }
+            }
           }
 
           const containerWidth = p5ContainerRef.current?.offsetWidth || 1;
@@ -124,7 +133,7 @@ const VideoPoseTracking: React.FC = () => {
       video.elt.remove();
       video.remove();
       p5InstanceRef.current?.remove();
-      setPoses([]);
+      setPoses(null);
     };
   }, [file, net, push, setPoses, togglePause]);
 

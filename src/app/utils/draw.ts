@@ -1,63 +1,8 @@
-import * as poseDetection from "@tensorflow-models/pose-detection";
 import p5 from "p5";
-import { IKeypoint3D } from "./calculations";
+import { IKeypoint3D, connections } from "./calculations";
 
 const threshold = 0;
 
-export const draw2DPose = (
-  p: p5,
-  poses: poseDetection.Pose[],
-  scale: number,
-  offsetX: number,
-  offsetY: number
-) => {
-  p.strokeWeight(2);
-  const r =
-    p.noise(p.frameCount / 5, p.frameCount / 10, p.frameCount / 20) * 255;
-  const g =
-    p.noise(p.frameCount / 20, p.frameCount / 10, p.frameCount / 5) * 255;
-  const b =
-    p.noise(p.frameCount / 10, p.frameCount / 5, p.frameCount / 20) * 255;
-
-  p.stroke(p.color(r, g, b, 25));
-  p.fill(p.color(r, g, b, 50));
-
-  // Draw skeleton
-  const connections = poseDetection.util.getAdjacentPairs(
-    poseDetection.SupportedModels.BlazePose
-  );
-
-  poses?.forEach(({ keypoints }) => {
-    // Draw keypoints
-    keypoints?.forEach((keypoint) => {
-      if (keypoint?.score && keypoint?.score > threshold) {
-        p.circle(
-          keypoint.x * scale + offsetX,
-          keypoint.y * scale + offsetY,
-          20
-        );
-      }
-      connections.forEach(([i, j]) => {
-        const keypoint1 = keypoints[i];
-        const keypoint2 = keypoints[j];
-
-        if (
-          keypoint2?.score &&
-          keypoint1?.score &&
-          keypoint1?.score > threshold &&
-          keypoint2?.score > threshold
-        ) {
-          p.line(
-            keypoint1.x * scale + offsetX,
-            keypoint1.y * scale + offsetY,
-            keypoint2.x * scale + offsetX,
-            keypoint2.y * scale + offsetY
-          );
-        }
-      });
-    });
-  });
-};
 export const draw2DKeyPoints = (
   p: p5,
   keypoints: IKeypoint3D[] | undefined,
@@ -65,51 +10,85 @@ export const draw2DKeyPoints = (
   offsetX: number,
   offsetY: number
 ) => {
-  p.strokeWeight(2);
-  const r =
-    p.noise(p.frameCount / 5, p.frameCount / 10, p.frameCount / 20) * 255;
-  const g =
-    p.noise(p.frameCount / 20, p.frameCount / 10, p.frameCount / 5) * 255;
-  const b =
-    p.noise(p.frameCount / 10, p.frameCount / 5, p.frameCount / 20) * 255;
+  if (!keypoints) return;
 
-  p.stroke(p.color(r, g, b, 25));
-  p.fill(p.color(r, g, b, 50));
+  // Neon Palette
+  const colorLeft = p.color(0, 255, 255); // Cyan
+  const colorRight = p.color(255, 0, 255); // Magenta
+  const colorCenter = p.color(255, 255, 255); // White
 
-  // Draw skeleton
-  const connections = poseDetection.util.getAdjacentPairs(
-    poseDetection.SupportedModels.BlazePose
-  );
+  // Draw Skeleton Connections
+  p.strokeWeight(4); // Thicker lines
+  connections.forEach(({ start: i, end: j }) => {
+    const kp1 = keypoints[i];
+    const kp2 = keypoints[j];
 
-  // Draw keypoints
-  keypoints?.forEach((keypoint) => {
-    if (keypoint?.score && keypoint?.score > threshold) {
-      p.circle(keypoint.x * scale + offsetX, keypoint.y * scale + offsetY, 20);
+    const score1 = kp1?.score ?? kp1?.visibility ?? 0;
+    const score2 = kp2?.score ?? kp2?.visibility ?? 0;
+
+    if (kp1 && kp2 && score1 > threshold && score2 > threshold) {
+      // Determine color based on side (even is right, odd is left usually, but let's check standard MediaPipe)
+      // MediaPipe Pose: 0-10 head, 11/12 shoulders, etc.
+      // Odd indices are mostly left, Even are mostly right (except head 0).
+      // Let's use a simple heuristic or gradient.
+
+      const isLeft = i % 2 !== 0 || j % 2 !== 0;
+      p.stroke(isLeft ? colorLeft : colorRight);
+
+      // Draw line
+      p.line(
+        kp1.x * scale + offsetX,
+        kp1.y * scale + offsetY,
+        kp2.x * scale + offsetX,
+        kp2.y * scale + offsetY
+      );
     }
-    connections.forEach(([i, j]) => {
-      const keypoint1 = keypoints[i];
-      const keypoint2 = keypoints[j];
+  });
 
-      if (
-        keypoint2?.score &&
-        keypoint1?.score &&
-        keypoint1?.score > threshold &&
-        keypoint2?.score > threshold
-      ) {
-        p.line(
-          keypoint1.x * scale + offsetX,
-          keypoint1.y * scale + offsetY,
-          keypoint2.x * scale + offsetX,
-          keypoint2.y * scale + offsetY
-        );
+  // Draw Keypoints with 3D feel
+  p.noStroke();
+  keypoints.forEach((keypoint, index) => {
+    const score = keypoint.score ?? keypoint.visibility ?? 1;
+    if (score > threshold) {
+      const x = keypoint.x * scale + offsetX;
+      const y = keypoint.y * scale + offsetY;
+      // Z is usually relative depth. Negative is closer to camera in some systems, positive in others.
+      // In MediaPipe world coordinates: Z is meters. In normalized landmarks: Z is scale-relative.
+      // Let's assume smaller Z (or negative) is closer -> bigger.
+      // We'll map Z roughly. If Z is missing, default to 0.
+      const z = keypoint.z || 0;
+
+      // Adjust size based on Z.
+      // Assuming Z ranges roughly -0.5 to 0.5 for body depth relative to hips.
+      // We want closer points (smaller Z) to be bigger.
+      const depthScale = p.map(z, -0.5, 0.5, 1.5, 0.5, true);
+      const baseSize = 10 * depthScale;
+
+      // Color based on side
+      let col = colorCenter;
+      if (index > 0) {
+        // 0 is nose
+        col = index % 2 !== 0 ? colorLeft : colorRight;
       }
-    });
+
+      // Glow effect (outer circle)
+      p.fill(p.red(col), p.green(col), p.blue(col), 100);
+      p.circle(x, y, baseSize * 2.5);
+
+      // Core (inner circle)
+      p.fill(p.red(col), p.green(col), p.blue(col), 255);
+      p.circle(x, y, baseSize);
+
+      // Highlight (specular)
+      p.fill(255, 255, 255, 200);
+      p.circle(x - baseSize * 0.2, y - baseSize * 0.2, baseSize * 0.3);
+    }
   });
 };
 
 export const drawPose3D = (
   p: p5,
-  keypoints: poseDetection.Keypoint[],
+  keypoints: IKeypoint3D[],
   canvasWidth: number,
   canvasHeight: number
 ) => {
@@ -121,11 +100,12 @@ export const drawPose3D = (
   const mappedNoiseR = p.map(noiseR, 0, 1, 0, 255);
   const mappedNoiseG = p.map(noiseG, 0, 1, 0, 255);
   const mappedNoiseB = p.map(noiseb, 0, 1, 0, 255);
-  keypoints?.forEach(({ x, y, z, score }) => {
+  keypoints?.forEach(({ x, y, z, score, visibility }) => {
     const mappedX = p.map(x, -1, 1, -widthFraction, widthFraction);
     const mappedY = p.map(y, -1, 1, -heightFraction, heightFraction);
     const mappedZ = p.map(z || 0, -1, 1, -widthFraction, widthFraction);
-    if (score && score > threshold) {
+    const conf = score ?? visibility ?? 0;
+    if (conf > threshold) {
       p.push();
       p.translate(mappedX, mappedY, mappedZ);
       p.noStroke();
@@ -149,13 +129,11 @@ export const drawPose3D = (
     }
   });
 
-  const adjacentKeyPoints = poseDetection.util.getAdjacentPairs(
-    poseDetection.SupportedModels.BlazePose
-  );
-
-  adjacentKeyPoints.forEach(([i, j]) => {
+  connections.forEach(({ start: i, end: j }) => {
     const kp1 = keypoints[i];
     const kp2 = keypoints[j];
+
+    if (!kp1 || !kp2) return;
 
     const mappedX1 = p.map(kp1.x, -1, 1, -widthFraction, widthFraction);
     const mappedY1 = p.map(kp1.y, -1, 1, -heightFraction, heightFraction);
@@ -165,8 +143,8 @@ export const drawPose3D = (
     const mappedY2 = p.map(kp2.y, -1, 1, -heightFraction, heightFraction);
     const mappedZ2 = p.map(kp2.z || 0, -1, 1, -widthFraction, widthFraction);
 
-    const k1score = kp1.score || 0;
-    const k2score = kp2.score || 0;
+    const k1score = kp1.score ?? kp1.visibility ?? 0;
+    const k2score = kp2.score ?? kp2.visibility ?? 0;
     if (k1score + k2score > threshold) {
       p.push();
       p.stroke(255);

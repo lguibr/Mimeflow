@@ -44,8 +44,8 @@ const AppBar = () => {
     setFile(null);
     setHistory([]);
     setScore(0);
-    setVideoPoses([]);
-    setWebcamPoses([]);
+    setVideoPoses(null);
+    setWebcamPoses(null);
   };
 
   return (
@@ -53,7 +53,13 @@ const AppBar = () => {
       <Linked onClick={resetGame} href={"/"}>
         <AppBarTitle>
           <Logo width="30px" height="30px" />
-          <p>MimeFlow 0.1 </p>
+          <LogoText>
+            <span style={{ color: "#4285F4" }}>M</span>
+            <span style={{ color: "#EA4335" }}>i</span>
+            <span style={{ color: "#FBBC05" }}>m</span>
+            <span style={{ color: "#34A853" }}>e</span>
+            <FlowText>Flow</FlowText>
+          </LogoText>
         </AppBarTitle>
       </Linked>
     </AppBarContainer>
@@ -73,4 +79,23 @@ const Linked = styled(Link)`
     text-decoration: none;
     color: inherit;
   }
+`;
+
+const LogoText = styled.div`
+  display: flex;
+  align-items: center;
+  font-family: var(--font-inter), sans-serif;
+  font-weight: 800;
+  font-size: 24px;
+  letter-spacing: -0.5px;
+`;
+
+const FlowText = styled.span`
+  font-family: var(--font-dancing), cursive;
+  font-weight: 400;
+  margin-left: 4px;
+  font-size: 28px;
+  background: linear-gradient(to right, #4285f4, #ea4335, #fbbc05, #34a853);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 `;

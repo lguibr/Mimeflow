@@ -1,16 +1,28 @@
 "use client";
 
 import dynamic from "next/dynamic";
-const TrackingView = dynamic(() => import("@/app/components/tracking"), {
-  ssr: false,
-});
+import MainLayout from "@/app/components/layout/MainLayout";
+const WebcamPoseTracking = dynamic(
+  () => import("@/app/components/tracking/WebcamPoseTracking"),
+  {
+    ssr: false,
+  }
+);
 
-const App: React.FC = () => {
+const YoutubePoseTracking = dynamic(
+  () => import("@/app/components/tracking/YoutubePoseTracking"),
+  {
+    ssr: false,
+  }
+);
+
+export default function TrackingPage() {
   return (
-    <main>
-      <TrackingView />
-    </main>
+    <MainLayout
+      leftPanel={<YoutubePoseTracking />}
+      rightPanel={<WebcamPoseTracking />}
+    >
+      {/* Fallback or additional content if needed */}
+    </MainLayout>
   );
-};
-
-export default App;
+}

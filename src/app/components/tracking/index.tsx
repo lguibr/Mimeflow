@@ -1,7 +1,5 @@
 "use client";
 
-import "@tensorflow/tfjs-backend-webgl";
-
 import styled from "styled-components";
 import dynamic from "next/dynamic";
 
@@ -31,6 +29,13 @@ const LocalVideoPoseTracking = dynamic(
   }
 );
 
+const YoutubePoseTracking = dynamic(
+  () => import("@/app/components/tracking/YoutubePoseTracking"),
+  {
+    ssr: false,
+  }
+);
+
 const App: React.FC = () => {
   const { setVideoPoses, setWebcamPoses } = useGameActions();
   const { loaded } = useGameViews();
@@ -38,21 +43,22 @@ const App: React.FC = () => {
   const { push } = useRouter();
 
   const resetTracking = useCallback(() => {
-    setVideoPoses([]);
-    setWebcamPoses([]);
+    setVideoPoses(null);
+    setWebcamPoses(null);
   }, [setVideoPoses, setWebcamPoses]);
 
   useEffect(() => {
-    if (!file) push("/");
+    // if (!file) push("/");
     return () => resetTracking();
   }, [file, push, resetTracking]);
 
-  if (!file || window === null) return null;
+  if (window === null) return null;
   return (
     <Container>
       {loaded && (
         <>
-          <LocalVideoPoseTracking />
+          {/* <LocalVideoPoseTracking /> */}
+          <YoutubePoseTracking />
           <Pose3DViewer type="webcam" />
           <Pose3DViewer type="video" />
           <ScoreGraphs />

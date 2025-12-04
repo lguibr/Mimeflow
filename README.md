@@ -4,15 +4,14 @@
   <img src="bitmap.png" alt="Logo" width="300"/>
 </p>
 
-
 Welcome to **Mime Flow**! This alpha version of our versatile pose matching application lets you engage interactively to practice and perfect your poses across various disciplines, from dance to martial arts, and yoga. Powered by cutting-edge technology, it's designed to adapt to your skills, helping you refine your movements with precision.
 
 ### How to Play:
 
-1. **Start at the Homepage:** Drag and drop a video file to begin. Supported formats include commonly used video types.
-2. **Automatic Redirection:** Once the file is loaded, you'll be redirected to the playback page.
-3. **Track and Score:** As you mimic the poses in the video, the system tracks each pose's accuracy, scoring them from 0 to 1.
-4. **Final Score:** After the video ends, you'll automatically be taken to the score page to view your cumulative score, which is the sum of all frame scores throughout the session.
+1. **Start at the Homepage:** Paste a YouTube URL to begin.
+2. **Setup Screen Share:** You'll be redirected to the tracking page. Click "Start Game & Share Screen" and select the **current tab** in the browser popup.
+3. **Track and Score:** The video will play automatically. As you mimic the poses, the system tracks your accuracy in real-time.
+4. **Final Score:** After the video ends, you'll see your final score and performance stats.
 
 ### Origin Story:
 
@@ -20,9 +19,10 @@ Mime Flow began as an innovation to overcome the limitations of traditional syst
 
 ### Key Features:
 
+- **YouTube Integration:** Seamlessly play and track poses from any YouTube video using our embedded player and screen capture technology. 📺
 - **Universal Pose Matching:** Leverages TensorFlow.js with BlazePose for real-time feedback on a wide variety of physical activities. 🌟
 - **Progress Tracking:** Every move is scored based on its accuracy, helping you improve by understanding your performance in real time. 📊
-- **Seamless User Experience:** React and Next.js provide a fluid, responsive interface that enhances your interaction without complexity. 🌐
+- **Seamless User Experience:** Built with Vite and React for a fluid, responsive interface. 🌐
 
 ### Alpha Version Note:
 
@@ -42,16 +42,16 @@ Set up Mime Flow on your local system with these simple steps:
    ```
 3. **Install dependencies:**
    ```
-   yarn
+   npm install
    ```
 4. **Launch the development server:**
    ```
-   yarn dev
+   npm run dev
    ```
 
 ### Technologies Used:
 
-- **Frontend:** React, Next.js, Styled Components
+- **Frontend:** React, Vite, Styled Components
 - **Pose Estimation:** TensorFlow.js, BlazePose
 - **State Management:** React Context API
 

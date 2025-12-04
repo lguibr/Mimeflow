@@ -10,7 +10,13 @@ import { draw2DKeyPoints } from "@/app/utils/draw";
 import { useGameActions, useGameViews } from "@/app/contexts/Game";
 import { IKeypoint3D } from "@/app/utils/calculations";
 
-const PoseTracking: React.FC = () => {
+interface PoseTrackingProps {
+  onVisibleCountChange?: (count: number) => void;
+}
+
+const PoseTracking: React.FC<PoseTrackingProps> = ({
+  onVisibleCountChange,
+}) => {
   const { webcamNet: net, activeSampleSpace, fps } = useGameViews();
   const {
     setWebcamPoses: setPoses,
@@ -23,6 +29,7 @@ const PoseTracking: React.FC = () => {
 
   const keyPoints = useRef<IKeypoint3D[]>([]);
   const processingFrameRate = useRef<number>(1);
+  const lastReportedCount = useRef<number>(-1);
 
   const isDesktop = () =>
     typeof window !== "undefined" && window.innerWidth >= 1024;
@@ -158,8 +165,24 @@ const PoseTracking: React.FC = () => {
           p.scale(-1, 1); // Flip the canvas horizontally
           p.image(video, x, y, scaledWidth, scaledHeight);
 
-          if (keyPoints?.current)
+          if (keyPoints?.current) {
             draw2DKeyPoints(p, keyPoints.current, scaleRatio, x, y);
+
+            // Calculate visible points
+            const visibleCount = keyPoints.current.filter(
+              (kp) => (kp.score ?? kp.visibility ?? 0) > 0.3 // Threshold for visibility
+            ).length;
+
+            // Report back to parent, throttled
+            if (
+              onVisibleCountChange &&
+              visibleCount !== lastReportedCount.current &&
+              p.frameCount % 10 === 0
+            ) {
+              lastReportedCount.current = visibleCount;
+              onVisibleCountChange(visibleCount);
+            }
+          }
         } else {
           if (p.frameCount % 60 === 0)
             console.log("WebcamPoseTracking: Video not ready", {
@@ -179,7 +202,7 @@ const PoseTracking: React.FC = () => {
         if (video.elt) video.elt.remove();
       }
     };
-  }, [net]);
+  }, [net, onVisibleCountChange]);
 
   useEffect(() => {
     const ticker = setInterval(() => {
@@ -231,7 +254,7 @@ const Container = styled.div`
   height: 100%;
   width: 100%;
   overflow: hidden;
-  background: #000;
+  background: transparent;
 `;
 
 const CanvasContainer = styled.div`

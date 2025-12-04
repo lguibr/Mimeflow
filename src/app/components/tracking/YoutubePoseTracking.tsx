@@ -14,6 +14,8 @@ import { useRouter } from "next/navigation";
 const YoutubePoseTracking: React.FC = () => {
   const searchParams = useSearchParams();
   const youtubeUrl = searchParams.get("youtubeUrl");
+  const videoUrl = searchParams.get("videoUrl");
+  const videoIdParam = searchParams.get("videoId");
 
   const {
     videoNet: net,
@@ -51,97 +53,176 @@ const YoutubePoseTracking: React.FC = () => {
   useEffect(() => {
     console.log("YoutubePoseTracking: useEffect triggered", {
       youtubeUrl,
+      videoUrl,
       videoRef: !!videoRef.current,
     });
-    if (youtubeUrl && videoRef.current) {
+    if ((youtubeUrl || videoUrl) && videoRef.current) {
       const initPlayer = async () => {
         try {
           console.log("YoutubePoseTracking: initPlayer started");
-          // Dynamic import dashjs
-          const dashjsImport = await import("dashjs");
-          const MediaPlayerFactory =
-            dashjsImport.MediaPlayer || dashjsImport.default?.MediaPlayer;
 
-          if (!MediaPlayerFactory) {
-            console.error(
-              "YoutubePoseTracking: MediaPlayer factory not found",
-              dashjsImport
-            );
-            return;
-          }
+          // Handle Local Video
+          if (videoUrl) {
+            console.log("YoutubePoseTracking: Initializing local video player");
+            const video = videoRef.current!;
+            video.src = videoUrl;
+            video.currentTime = 0;
 
-          const videoIdMatch = youtubeUrl.match(
-            /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?|shorts)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
-          );
-          const videoId = videoIdMatch ? videoIdMatch[1] : null;
-          console.log("YoutubePoseTracking: videoId extracted", videoId);
-
-          if (videoId) {
-            const manifestUrl = `/api/youtube?videoId=${videoId}`;
-            console.log("YoutubePoseTracking: manifestUrl", manifestUrl);
-
-            if (playerRef.current) {
-              console.log("YoutubePoseTracking: Resetting existing player");
-              playerRef.current.reset();
-            }
-
-            console.log("YoutubePoseTracking: Creating MediaPlayer");
-            const player = MediaPlayerFactory().create();
-            console.log(
-              "YoutubePoseTracking: Initializing player with",
-              manifestUrl
-            );
-            player.initialize(videoRef.current!, manifestUrl, true);
-
-            player.on("streamInitialized", () => {
-              console.log("YoutubePoseTracking: streamInitialized");
-              const duration = player.duration();
-              setDuration(duration);
+            const handleLoadedMetadata = () => {
+              console.log("YoutubePoseTracking: loadedmetadata");
+              setDuration(video.duration);
               setIsPlaying(true);
-              togglePause(false); // Sync global game state: Playing
+              togglePause(false);
+              video.play();
+            };
 
-              // Handle start time from URL (t parameter)
-              const urlObj = new URL(youtubeUrl);
-              // ... (rest of start time logic)
-            });
+            const handleTimeUpdate = () => {
+              setCurrentTime(video.currentTime);
+            };
 
-            // ... (rest of player setup)
-
-            const handleVideoComplete = () => {
-              console.log(
-                "YoutubePoseTracking: Video completed (end or limit). Calling saveScore and setShowResult."
-              );
-              player.pause();
+            const handleEnded = () => {
+              console.log("YoutubePoseTracking: Video ended");
               setIsPlaying(false);
-              togglePause(true); // Sync global game state: Paused
-              if (videoId) {
-                console.log(
-                  "YoutubePoseTracking: Saving score for video",
-                  videoId
-                );
-                saveScore(videoId);
+              togglePause(true);
+              if (videoIdParam) {
+                saveScore(videoIdParam);
               }
               setShowResult(true);
             };
 
-            player.on("playbackTimeUpdated", () => {
-              const time = player.time();
-              setCurrentTime(time);
+            video.addEventListener("loadedmetadata", handleLoadedMetadata);
+            video.addEventListener("timeupdate", handleTimeUpdate);
+            video.addEventListener("ended", handleEnded);
 
-              // Enforce 59s limit for all videos
-              if (time >= 59) {
-                handleVideoComplete();
+            playerRef.current = {
+              reset: () => {
+                video.pause();
+                video.removeAttribute("src");
+                video.load();
+                video.removeEventListener(
+                  "loadedmetadata",
+                  handleLoadedMetadata
+                );
+                video.removeEventListener("timeupdate", handleTimeUpdate);
+                video.removeEventListener("ended", handleEnded);
+              },
+              play: () => video.play(),
+              pause: () => video.pause(),
+              seek: (time: number) => {
+                video.currentTime = time;
+              },
+            };
+            return;
+          }
+
+          // Handle YouTube (Dash.js)
+          if (youtubeUrl) {
+            const dashjsImport = await import("dashjs");
+            const MediaPlayerFactory =
+              dashjsImport.MediaPlayer || dashjsImport.default?.MediaPlayer;
+
+            if (!MediaPlayerFactory) {
+              console.error(
+                "YoutubePoseTracking: MediaPlayer factory not found",
+                dashjsImport
+              );
+              return;
+            }
+
+            let videoId = null;
+            const videoIdMatch = youtubeUrl.match(
+              /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?|shorts)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+            );
+
+            if (videoIdMatch) {
+              videoId = videoIdMatch[1];
+            } else if (/^[a-zA-Z0-9_-]{11}$/.test(youtubeUrl)) {
+              videoId = youtubeUrl;
+            }
+
+            console.log("YoutubePoseTracking: videoId extracted", videoId);
+
+            if (videoId) {
+              const manifestUrl = `/api/youtube?videoId=${videoId}`;
+              console.log("YoutubePoseTracking: manifestUrl", manifestUrl);
+
+              if (playerRef.current) {
+                console.log("YoutubePoseTracking: Resetting existing player");
+                playerRef.current.reset();
               }
-            });
 
-            player.on("playbackEnded", () => {
-              console.log("YoutubePoseTracking: playbackEnded event received");
-              handleVideoComplete();
-            });
+              console.log("YoutubePoseTracking: Creating MediaPlayer");
+              const player = MediaPlayerFactory().create();
+              console.log(
+                "YoutubePoseTracking: Initializing player with",
+                manifestUrl
+              );
+              player.initialize(videoRef.current!, manifestUrl, true);
 
-            playerRef.current = player;
-          } else {
-            console.warn("YoutubePoseTracking: Invalid video ID");
+              player.on("streamInitialized", () => {
+                console.log("YoutubePoseTracking: streamInitialized");
+                const duration = player.duration();
+                setDuration(duration);
+                setIsPlaying(true);
+                togglePause(false); // Sync global game state: Playing
+
+                // Handle start time from URL (t parameter)
+                try {
+                  const urlObj = new URL(youtubeUrl);
+                  const tParam = urlObj.searchParams.get("t");
+                  if (tParam) {
+                    const startTime = parseInt(tParam);
+                    if (!isNaN(startTime)) {
+                      player.seek(startTime);
+                    }
+                  }
+                } catch (e) {
+                  // youtubeUrl might be just an ID, so no URL parameters to parse
+                  console.log(
+                    "YoutubePoseTracking: Not a valid URL for parameter parsing",
+                    youtubeUrl
+                  );
+                }
+              });
+
+              const handleVideoComplete = () => {
+                console.log(
+                  "YoutubePoseTracking: Video completed (end or limit). Calling saveScore and setShowResult."
+                );
+                player.pause();
+                setIsPlaying(false);
+                togglePause(true); // Sync global game state: Paused
+                if (videoId) {
+                  console.log(
+                    "YoutubePoseTracking: Saving score for video",
+                    videoId
+                  );
+                  saveScore(videoId);
+                }
+                setShowResult(true);
+              };
+
+              player.on("playbackTimeUpdated", () => {
+                const time = player.time();
+                setCurrentTime(time);
+
+                // Enforce 59s limit for all videos
+                if (time >= 59) {
+                  handleVideoComplete();
+                }
+              });
+
+              player.on("playbackEnded", () => {
+                console.log(
+                  "YoutubePoseTracking: playbackEnded event received"
+                );
+                handleVideoComplete();
+              });
+
+              playerRef.current = player;
+            } else {
+              console.warn("YoutubePoseTracking: Invalid video ID");
+            }
           }
         } catch (error) {
           console.error("Error initializing player:", error);
@@ -158,7 +239,7 @@ const YoutubePoseTracking: React.FC = () => {
         togglePause(true); // Ensure paused on cleanup
       }
     };
-  }, [youtubeUrl, togglePause]); // Added togglePause dependency
+  }, [youtubeUrl, videoUrl, videoIdParam, togglePause]); // Added dependencies
 
   useEffect(() => {
     const frameRate = isDesktop() ? 60 : 30;
@@ -319,7 +400,7 @@ const YoutubePoseTracking: React.FC = () => {
 
   return (
     <Container>
-      {!youtubeUrl && (
+      {!youtubeUrl && !videoUrl && (
         <Placeholder>No video selected. Go back to Home.</Placeholder>
       )}
       <VideoContainer>
@@ -332,7 +413,7 @@ const YoutubePoseTracking: React.FC = () => {
         <CanvasContainer ref={p5ContainerRef} />
       </VideoContainer>
 
-      {youtubeUrl && (
+      {(youtubeUrl || videoUrl) && (
         <Controls>
           <ProgressBarContainer>
             <TimeDisplay>{formatTime(currentTime)}</TimeDisplay>

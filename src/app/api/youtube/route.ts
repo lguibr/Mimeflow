@@ -15,13 +15,25 @@ export async function GET(request: NextRequest) {
   }
 
   try {
+    console.log("Initializing Innertube...");
     // Disable cache to prevent file system write errors in Vercel
     const innertube = await Innertube.create({
       cache: new UniversalCache(false),
       generate_session_locally: true,
     });
 
-    const videoInfo = await innertube.getInfo(videoId, { client: "ANDROID" });
+    console.log(`Fetching info for videoId: ${videoId}`);
+    const videoInfo = await innertube.getInfo(videoId, { client: "IOS" });
+
+    if (!videoInfo.streaming_data) {
+      console.error(
+        "Streaming data missing. Playability status:",
+        videoInfo.playability_status
+      );
+      throw new Error(
+        `Streaming data not available. Status: ${videoInfo.playability_status?.status}`
+      );
+    }
 
     // Filter for MP4 formats to ensure compatibility (avoid VP9/WebM issues)
     if (videoInfo.streaming_data?.adaptive_formats) {
@@ -31,6 +43,7 @@ export async function GET(request: NextRequest) {
         );
     }
 
+    console.log("Generating DASH manifest...");
     // Generate DASH manifest
     // We need to rewrite URLs to point to our proxy
     const manifest = await videoInfo.toDash({
@@ -41,6 +54,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
+    console.log("Manifest generated successfully.");
     return new NextResponse(manifest, {
       headers: {
         "Content-Type": "application/dash+xml",
@@ -52,6 +66,7 @@ export async function GET(request: NextRequest) {
     return NextResponse.json(
       {
         error: "Failed to fetch video info",
+        step: "Fetching/Processing",
         details: error.message || String(error),
         stack: error.stack,
       },

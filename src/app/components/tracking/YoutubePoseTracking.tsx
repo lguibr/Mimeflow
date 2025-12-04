@@ -3,6 +3,7 @@ import React, { useRef, useEffect, useState } from "react";
 import p5 from "p5";
 import { useSearchParams } from "next/navigation";
 import styled from "styled-components";
+import YouTube, { YouTubeProps } from "react-youtube";
 
 import { draw2DKeyPoints } from "@/app/utils/draw";
 import { useGameActions, useGameViews } from "@/app/contexts/Game";
@@ -14,7 +15,6 @@ import { useRouter } from "next/navigation";
 const YoutubePoseTracking: React.FC = () => {
   const searchParams = useSearchParams();
   const youtubeUrl = searchParams.get("youtubeUrl");
-  const videoUrl = searchParams.get("videoUrl");
   const videoIdParam = searchParams.get("videoId");
 
   const {
@@ -34,10 +34,20 @@ const YoutubePoseTracking: React.FC = () => {
 
   const router = useRouter();
 
-  const videoRef = useRef<HTMLVideoElement>(null);
   const p5ContainerRef = useRef<HTMLDivElement>(null);
   const p5InstanceRef = useRef<p5>();
-  const playerRef = useRef<any>(null); // Type as any to avoid dashjs type issues for now
+
+  // Ref for the hidden video element that plays the captured stream
+  const capturedVideoRef = useRef<HTMLVideoElement>(null);
+
+  // Ref for the YouTube player container to get its position
+  const youtubeContainerRef = useRef<HTMLDivElement>(null);
+
+  // Ref for the YouTube player instance
+  const playerRef = useRef<any>(null);
+
+  // Native offscreen canvas for cropping
+  const offscreenCanvasRef = useRef<HTMLCanvasElement | null>(null);
 
   const keyPoints = useRef<IKeypoint3D[]>([]);
   const processingFrameRate = useRef<number>(1);
@@ -45,205 +55,130 @@ const YoutubePoseTracking: React.FC = () => {
   const [currentTime, setCurrentTime] = useState(0);
   const [duration, setDuration] = useState(0);
   const [showResult, setShowResult] = useState(false);
+  const [isCapturing, setIsCapturing] = useState(false);
 
   const isDesktop = () =>
     typeof window !== "undefined" && window.innerWidth >= 1024;
 
-  // Initialize Dash.js player
+  // Extract Video ID
+  const getVideoId = (url: string | null) => {
+    if (!url) return null;
+    const match = url.match(
+      /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?|shorts)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
+    );
+    return match ? match[1] : /^[a-zA-Z0-9_-]{11}$/.test(url) ? url : null;
+  };
+
+  const videoId = getVideoId(youtubeUrl);
+
+  // Initialize offscreen canvas
   useEffect(() => {
-    console.log("YoutubePoseTracking: useEffect triggered", {
-      youtubeUrl,
-      videoUrl,
-      videoRef: !!videoRef.current,
-    });
-    if ((youtubeUrl || videoUrl) && videoRef.current) {
-      const initPlayer = async () => {
-        try {
-          console.log("YoutubePoseTracking: initPlayer started");
-
-          // Handle Local Video
-          if (videoUrl) {
-            console.log("YoutubePoseTracking: Initializing local video player");
-            const video = videoRef.current!;
-            video.src = videoUrl;
-            video.currentTime = 0;
-
-            const handleLoadedMetadata = () => {
-              console.log("YoutubePoseTracking: loadedmetadata");
-              setDuration(video.duration);
-              setIsPlaying(true);
-              togglePause(false);
-              video.play();
-            };
-
-            const handleTimeUpdate = () => {
-              setCurrentTime(video.currentTime);
-            };
-
-            const handleEnded = () => {
-              console.log("YoutubePoseTracking: Video ended");
-              setIsPlaying(false);
-              togglePause(true);
-              if (videoIdParam) {
-                saveScore(videoIdParam);
-              }
-              setShowResult(true);
-            };
-
-            video.addEventListener("loadedmetadata", handleLoadedMetadata);
-            video.addEventListener("timeupdate", handleTimeUpdate);
-            video.addEventListener("ended", handleEnded);
-
-            playerRef.current = {
-              reset: () => {
-                video.pause();
-                video.removeAttribute("src");
-                video.load();
-                video.removeEventListener(
-                  "loadedmetadata",
-                  handleLoadedMetadata
-                );
-                video.removeEventListener("timeupdate", handleTimeUpdate);
-                video.removeEventListener("ended", handleEnded);
-              },
-              play: () => video.play(),
-              pause: () => video.pause(),
-              seek: (time: number) => {
-                video.currentTime = time;
-              },
-            };
-            return;
-          }
-
-          // Handle YouTube (Dash.js)
-          if (youtubeUrl) {
-            const dashjsImport = await import("dashjs");
-            const MediaPlayerFactory =
-              dashjsImport.MediaPlayer || dashjsImport.default?.MediaPlayer;
-
-            if (!MediaPlayerFactory) {
-              console.error(
-                "YoutubePoseTracking: MediaPlayer factory not found",
-                dashjsImport
-              );
-              return;
-            }
-
-            let videoId = null;
-            const videoIdMatch = youtubeUrl.match(
-              /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?|shorts)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
-            );
-
-            if (videoIdMatch) {
-              videoId = videoIdMatch[1];
-            } else if (/^[a-zA-Z0-9_-]{11}$/.test(youtubeUrl)) {
-              videoId = youtubeUrl;
-            }
-
-            console.log("YoutubePoseTracking: videoId extracted", videoId);
-
-            if (videoId) {
-              const manifestUrl = `/api/youtube?videoId=${videoId}`;
-              console.log("YoutubePoseTracking: manifestUrl", manifestUrl);
-
-              if (playerRef.current) {
-                console.log("YoutubePoseTracking: Resetting existing player");
-                playerRef.current.reset();
-              }
-
-              console.log("YoutubePoseTracking: Creating MediaPlayer");
-              const player = MediaPlayerFactory().create();
-              console.log(
-                "YoutubePoseTracking: Initializing player with",
-                manifestUrl
-              );
-              player.initialize(videoRef.current!, manifestUrl, true);
-
-              player.on("streamInitialized", () => {
-                console.log("YoutubePoseTracking: streamInitialized");
-                const duration = player.duration();
-                setDuration(duration);
-                setIsPlaying(true);
-                togglePause(false); // Sync global game state: Playing
-
-                // Handle start time from URL (t parameter)
-                try {
-                  const urlObj = new URL(youtubeUrl);
-                  const tParam = urlObj.searchParams.get("t");
-                  if (tParam) {
-                    const startTime = parseInt(tParam);
-                    if (!isNaN(startTime)) {
-                      player.seek(startTime);
-                    }
-                  }
-                } catch (e) {
-                  // youtubeUrl might be just an ID, so no URL parameters to parse
-                  console.log(
-                    "YoutubePoseTracking: Not a valid URL for parameter parsing",
-                    youtubeUrl
-                  );
-                }
-              });
-
-              const handleVideoComplete = () => {
-                console.log(
-                  "YoutubePoseTracking: Video completed (end or limit). Calling saveScore and setShowResult."
-                );
-                player.pause();
-                setIsPlaying(false);
-                togglePause(true); // Sync global game state: Paused
-                if (videoId) {
-                  console.log(
-                    "YoutubePoseTracking: Saving score for video",
-                    videoId
-                  );
-                  saveScore(videoId);
-                }
-                setShowResult(true);
-              };
-
-              player.on("playbackTimeUpdated", () => {
-                const time = player.time();
-                setCurrentTime(time);
-
-                // Enforce 59s limit for all videos
-                if (time >= 59) {
-                  handleVideoComplete();
-                }
-              });
-
-              player.on("playbackEnded", () => {
-                console.log(
-                  "YoutubePoseTracking: playbackEnded event received"
-                );
-                handleVideoComplete();
-              });
-
-              playerRef.current = player;
-            } else {
-              console.warn("YoutubePoseTracking: Invalid video ID");
-            }
-          }
-        } catch (error) {
-          console.error("Error initializing player:", error);
-        }
-      };
-      initPlayer();
+    if (!offscreenCanvasRef.current) {
+      offscreenCanvasRef.current = document.createElement("canvas");
     }
+  }, []);
 
-    return () => {
-      if (playerRef.current) {
-        console.log("YoutubePoseTracking: Cleanup player");
-        playerRef.current.reset();
-        playerRef.current = null;
-        togglePause(true); // Ensure paused on cleanup
+  // Start Screen Capture
+  const startCapture = async () => {
+    try {
+      const captureStream = await navigator.mediaDevices.getDisplayMedia({
+        video: {
+          displaySurface: "browser",
+        } as any, // Type cast for Chrome-specific option
+        audio: false,
+        selfBrowserSurface: "include", // Allow capturing the current tab
+      } as any); // Type cast for selfBrowserSurface support
+
+      if (capturedVideoRef.current) {
+        capturedVideoRef.current.srcObject = captureStream;
+        capturedVideoRef.current.play();
+        setIsCapturing(true);
+
+        // Handle stream stop (user clicks "Stop sharing")
+        captureStream.getVideoTracks()[0].onended = () => {
+          stopCapture();
+        };
       }
-    };
-  }, [youtubeUrl, videoUrl, videoIdParam, togglePause]); // Added dependencies
+    } catch (err) {
+      console.error("Error starting screen capture:", err);
+    }
+  };
 
+  const stopCapture = () => {
+    if (capturedVideoRef.current && capturedVideoRef.current.srcObject) {
+      const stream = capturedVideoRef.current.srcObject as MediaStream;
+      stream.getTracks().forEach((track) => track.stop());
+      capturedVideoRef.current.srcObject = null;
+    }
+    setIsCapturing(false);
+  };
+
+  // YouTube Player Options
+  const opts: YouTubeProps["opts"] = {
+    height: "100%",
+    width: "100%",
+    playerVars: {
+      autoplay: 0,
+      controls: 1,
+      modestbranding: 1,
+      rel: 0,
+    },
+  };
+
+  const onPlayerReady: YouTubeProps["onReady"] = (event) => {
+    playerRef.current = event.target;
+    setDuration(event.target.getDuration());
+
+    // Handle start time from URL
+    if (youtubeUrl) {
+      try {
+        const urlObj = new URL(youtubeUrl);
+        const tParam = urlObj.searchParams.get("t");
+        if (tParam) {
+          const startTime = parseInt(tParam);
+          if (!isNaN(startTime)) {
+            event.target.seekTo(startTime);
+          }
+        }
+      } catch (e) {
+        // Ignore if not a valid URL
+      }
+    }
+  };
+
+  const onPlayerStateChange: YouTubeProps["onStateChange"] = (event) => {
+    // 1 = Playing, 2 = Paused, 0 = Ended
+    if (event.data === 1) {
+      setIsPlaying(true);
+      togglePause(false);
+    } else if (event.data === 2) {
+      setIsPlaying(false);
+      togglePause(true);
+    } else if (event.data === 0) {
+      setIsPlaying(false);
+      togglePause(true);
+      if (videoId || videoIdParam) {
+        saveScore(videoId || videoIdParam || "unknown");
+      }
+      setShowResult(true);
+      stopCapture();
+    }
+  };
+
+  // Timer for progress bar
+  useEffect(() => {
+    let interval: NodeJS.Timeout;
+    if (isPlaying && playerRef.current) {
+      interval = setInterval(() => {
+        setCurrentTime(playerRef.current.getCurrentTime());
+      }, 1000);
+    }
+    return () => clearInterval(interval);
+  }, [isPlaying]);
+
+  // P5 Sketch for Pose Detection and Drawing
   useEffect(() => {
     const frameRate = isDesktop() ? 60 : 30;
-    let scaleRatio = 1;
 
     const sketch = (p: p5) => {
       p.setup = () => {
@@ -251,6 +186,12 @@ const YoutubePoseTracking: React.FC = () => {
           p5ContainerRef.current!.getBoundingClientRect();
         p.createCanvas(width, height).parent(p5ContainerRef.current!);
         p.frameRate(frameRate);
+
+        // Update offscreen canvas size
+        if (offscreenCanvasRef.current) {
+          offscreenCanvasRef.current.width = width;
+          offscreenCanvasRef.current.height = height;
+        }
       };
 
       p.windowResized = () => {
@@ -258,28 +199,86 @@ const YoutubePoseTracking: React.FC = () => {
           const { width, height } =
             p5ContainerRef.current.getBoundingClientRect();
           p.resizeCanvas(width, height);
+
+          if (offscreenCanvasRef.current) {
+            offscreenCanvasRef.current.width = width;
+            offscreenCanvasRef.current.height = height;
+          }
         }
       };
 
       p.draw = () => {
-        p.clear(); // Keep canvas transparent
+        p.clear();
+
+        // Use the captured video stream for detection
+        const video = capturedVideoRef.current;
+        const offscreenCanvas = offscreenCanvasRef.current;
 
         if (
-          videoRef.current &&
-          !videoRef.current.paused &&
-          !videoRef.current.ended
+          video &&
+          !video.paused &&
+          !video.ended &&
+          video.readyState >= 2 &&
+          offscreenCanvas
         ) {
-          const video = videoRef.current;
+          // Determine crop region based on YouTube container position
+          let cropX = 0,
+            cropY = 0,
+            cropW = video.videoWidth,
+            cropH = video.videoHeight;
+
+          if (youtubeContainerRef.current) {
+            const rect = youtubeContainerRef.current.getBoundingClientRect();
+            const videoW = video.videoWidth;
+            const videoH = video.videoHeight;
+            const windowW = window.innerWidth;
+            const windowH = window.innerHeight;
+
+            // Calculate scale factors
+            const scaleX = videoW / windowW;
+            const scaleY = videoH / windowH;
+
+            cropX = rect.left * scaleX;
+            cropY = rect.top * scaleY;
+            cropW = rect.width * scaleX;
+            cropH = rect.height * scaleY;
+          }
+
+          // Draw cropped video to offscreen canvas using native context
+          const ctx = offscreenCanvas.getContext("2d");
+          if (ctx) {
+            // Clear previous frame
+            ctx.clearRect(0, 0, offscreenCanvas.width, offscreenCanvas.height);
+
+            // Draw new frame
+            try {
+              ctx.drawImage(
+                video,
+                cropX,
+                cropY,
+                cropW,
+                cropH, // Source: crop region
+                0,
+                0,
+                offscreenCanvas.width,
+                offscreenCanvas.height // Destination: full offscreen canvas
+              );
+            } catch (e) {
+              console.error("Error drawing video to offscreen canvas:", e);
+            }
+          }
 
           // Pose Detection
           const start = Date.now();
           if (p.frameCount % processingFrameRate.current === 0) {
-            if (net && video.videoWidth > 0 && video.videoHeight > 0) {
+            if (net) {
               try {
+                // Pass the native offscreen canvas to MediaPipe
                 const detectedPoses = net.detectForVideo(
-                  video,
+                  offscreenCanvas,
                   performance.now()
                 );
+
                 if (detectedPoses && detectedPoses.landmarks.length > 0) {
                   const end = Date.now();
                   const time = end - start;
@@ -287,14 +286,35 @@ const YoutubePoseTracking: React.FC = () => {
                   if ((p.frameCount % 10) * processingFrameRate.current === 0)
                     setFps(fps);
 
-                  // Throttle React state updates to avoid "Maximum update depth" error
                   if (p.frameCount % 5 === 0) {
                     setPoses(detectedPoses);
                   }
 
                   // Denormalize landmarks for drawing
-                  const videoW = video.videoWidth;
-                  const videoH = video.videoHeight;
+                  // The landmarks are normalized (0-1) relative to the OFFSCREEN CANVAS (the crop).
+                  // We need to map them back to the MAIN CANVAS coordinates.
+                  // Main canvas covers the whole screen (or container).
+                  // The crop corresponds to the YouTube container rect on the main canvas.
+
+                  // If we drew the crop to fill the offscreen canvas (width, height),
+                  // then (0,0) in landmarks -> (0,0) in offscreen -> (rect.left, rect.top) in main.
+                  // (1,1) in landmarks -> (width, height) in offscreen -> (rect.right, rect.bottom) in main.
+
+                  let drawX = 0;
+                  let drawY = 0;
+                  let drawW = p.width;
+                  let drawH = p.height;
+
+                  if (youtubeContainerRef.current) {
+                    const rect =
+                      youtubeContainerRef.current.getBoundingClientRect();
+                    // We need these relative to the p5 canvas, which is absolute positioned at 0,0
+                    // So rect.left, rect.top are correct if p5 canvas is full screen.
+                    drawX = rect.left;
+                    drawY = rect.top;
+                    drawW = rect.width;
+                    drawH = rect.height;
+                  }
 
                   keyPoints.current = detectedPoses.landmarks[0].map(
                     (kp: {
@@ -304,8 +324,8 @@ const YoutubePoseTracking: React.FC = () => {
                       visibility?: number;
                     }) => ({
                       ...kp,
-                      x: kp.x * videoW,
-                      y: kp.y * videoH,
+                      x: kp.x * drawW + drawX,
+                      y: kp.y * drawH + drawY,
                     })
                   ) as unknown as IKeypoint3D[];
                 }
@@ -315,25 +335,10 @@ const YoutubePoseTracking: React.FC = () => {
             }
           }
 
-          // Calculate scaling to match object-fit: contain
-          const containerWidth = p.width;
-          const containerHeight = p.height;
-          const videoWidth = video.videoWidth || 1;
-          const videoHeight = video.videoHeight || 1;
-
-          const scale = Math.min(
-            containerWidth / videoWidth,
-            containerHeight / videoHeight
-          );
-
-          const scaledWidth = videoWidth * scale;
-          const scaledHeight = videoHeight * scale;
-          const x = (containerWidth - scaledWidth) / 2;
-          const y = (containerHeight - scaledHeight) / 2;
-
           // Draw Skeleton
           if (keyPoints.current) {
-            draw2DKeyPoints(p, keyPoints.current, scale, x, y);
+            // We draw directly on the canvas, 1:1 mapping since we denormalized to canvas coordinates
+            draw2DKeyPoints(p, keyPoints.current, 1, 0, 0);
           }
         }
       };
@@ -346,44 +351,18 @@ const YoutubePoseTracking: React.FC = () => {
     };
   }, [net]);
 
-  const togglePlay = () => {
-    if (videoRef.current) {
-      if (videoRef.current.paused) {
-        videoRef.current.play();
-        setIsPlaying(true);
-        togglePause(false); // Global: Playing
-      } else {
-        videoRef.current.pause();
-        setIsPlaying(false);
-        togglePause(true); // Global: Paused
-      }
-    }
-  };
-
-  const stopVideo = () => {
-    if (videoRef.current) {
-      videoRef.current.pause();
-      videoRef.current.currentTime = 0;
-      setIsPlaying(false);
-      togglePause(true); // Global: Paused
-    }
-  };
-
-  const handleSeek = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const time = parseFloat(e.target.value);
-    if (playerRef.current) {
-      playerRef.current.seek(time);
-      setCurrentTime(time);
-    }
-  };
+  // Cleanup
+  useEffect(() => {
+    return () => {
+      stopCapture();
+    };
+  }, []);
 
   const handlePlayAgain = () => {
     setShowResult(false);
     if (playerRef.current) {
-      playerRef.current.seek(0);
-      playerRef.current.play();
-      setIsPlaying(true);
-      togglePause(false);
+      playerRef.current.seekTo(0);
+      playerRef.current.playVideo();
     }
   };
 
@@ -391,71 +370,52 @@ const YoutubePoseTracking: React.FC = () => {
     router.push("/");
   };
 
-  const formatTime = (time: number) => {
-    if (isNaN(time)) return "0:00";
-    const minutes = Math.floor(time / 60);
-    const seconds = Math.floor(time % 60);
-    return `${minutes}:${seconds < 10 ? "0" : ""}${seconds}`;
-  };
-
   return (
     <Container>
-      {!youtubeUrl && !videoUrl && (
+      {!youtubeUrl && (
         <Placeholder>No video selected. Go back to Home.</Placeholder>
       )}
+
       <VideoContainer>
-        <video
-          ref={videoRef}
-          style={{ width: "100%", height: "100%", objectFit: "contain" }}
-          crossOrigin="anonymous"
-          playsInline
-        />
+        {/* Hidden video element for processing the captured stream */}
+        <HiddenVideo ref={capturedVideoRef} muted playsInline />
+
+        {videoId ? (
+          <div
+            ref={youtubeContainerRef}
+            style={{ width: "100%", height: "100%" }}
+          >
+            <YouTube
+              videoId={videoId}
+              opts={opts}
+              onReady={onPlayerReady}
+              onStateChange={onPlayerStateChange}
+              className="youtube-player"
+              style={{ width: "100%", height: "100%" }}
+            />
+          </div>
+        ) : null}
+
         <CanvasContainer ref={p5ContainerRef} />
+
+        {!isCapturing && (
+          <Overlay>
+            <StartButton onClick={startCapture}>
+              Start Game & Share Screen
+            </StartButton>
+            <InstructionText>
+              Click to start. Select &quot;This Tab&quot; in the popup window.
+            </InstructionText>
+          </Overlay>
+        )}
       </VideoContainer>
 
-      {(youtubeUrl || videoUrl) && (
-        <Controls>
-          <ProgressBarContainer>
-            <TimeDisplay>{formatTime(currentTime)}</TimeDisplay>
-            <ProgressBar
-              type="range"
-              min="0"
-              max={duration || 100}
-              value={currentTime}
-              onChange={handleSeek}
-            />
-            <TimeDisplay>{formatTime(duration)}</TimeDisplay>
-          </ProgressBarContainer>
-          <Buttons>
-            <Button onClick={togglePlay}>
-              {isPlaying ? (
-                <>
-                  <span className="icon">⏸</span> Pause
-                </>
-              ) : (
-                <>
-                  <span className="icon">▶</span> Play
-                </>
-              )}
-            </Button>
-            <Button onClick={stopVideo}>
-              <span className="icon">⏹</span> Stop
-            </Button>
-          </Buttons>
-          <SimilarityDisplay>
-            Match: {Math.round(similarity * 100)}%
-          </SimilarityDisplay>
-        </Controls>
-      )}
       {showResult && (
-        <>
-          {console.log("YoutubePoseTracking: Rendering ResultScreen")}
-          <ResultScreen
-            score={score}
-            onPlayAgain={handlePlayAgain}
-            onTryAnother={handleTryAnother}
-          />
-        </>
+        <ResultScreen
+          score={score}
+          onPlayAgain={handlePlayAgain}
+          onTryAnother={handleTryAnother}
+        />
       )}
     </Container>
   );
@@ -480,6 +440,11 @@ const VideoContainer = styled.div`
   display: flex;
   justify-content: center;
   align-items: center;
+
+  .youtube-player {
+    width: 100%;
+    height: 100%;
+  }
 `;
 
 const CanvasContainer = styled.div`
@@ -492,60 +457,44 @@ const CanvasContainer = styled.div`
   z-index: 10;
 `;
 
-const Controls = styled.div`
-  padding: 10px;
-  background: rgba(0, 0, 0, 0.8);
+const HiddenVideo = styled.video`
+  display: none; // Hidden from view, used for processing
+`;
+
+const Overlay = styled.div`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(0, 0, 0, 0.7);
   display: flex;
   flex-direction: column;
-  gap: 10px;
-`;
-
-const ProgressBarContainer = styled.div`
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  width: 100%;
-`;
-
-const ProgressBar = styled.input`
-  flex: 1;
-  cursor: pointer;
-  accent-color: #007f8b;
-`;
-
-const TimeDisplay = styled.span`
-  font-size: 12px;
-  color: #ccc;
-  min-width: 40px;
-`;
-
-const Buttons = styled.div`
-  display: flex;
   justify-content: center;
-  gap: 20px;
+  align-items: center;
+  z-index: 20;
 `;
 
-const Button = styled.button`
-  background: transparent;
-  border: none;
+const StartButton = styled.button`
+  background: #007f8b;
   color: white;
-  font-size: 14px;
-  font-weight: 600;
+  border: none;
+  padding: 15px 30px;
+  font-size: 20px;
+  font-weight: bold;
+  border-radius: 8px;
   cursor: pointer;
-  display: flex;
-  align-items: center;
-  gap: 5px;
-  padding: 5px 10px;
-  border-radius: 5px;
   transition: background 0.2s;
 
   &:hover {
-    background: rgba(255, 255, 255, 0.1);
+    background: #005f6b;
   }
+`;
 
-  .icon {
-    font-size: 16px;
-  }
+const InstructionText = styled.p`
+  color: #ccc;
+  margin-top: 15px;
+  font-size: 14px;
 `;
 
 const Placeholder = styled.div`
@@ -554,13 +503,4 @@ const Placeholder = styled.div`
   align-items: center;
   justify-content: center;
   color: #666;
-`;
-
-const SimilarityDisplay = styled.div`
-  color: #00ff00;
-  font-size: 18px;
-  font-weight: bold;
-  text-align: center;
-  margin-top: 5px;
-  text-shadow: 0 0 5px rgba(0, 255, 0, 0.5);
 `;

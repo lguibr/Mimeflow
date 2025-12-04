@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import styled from "styled-components";
 import Logo from "./components/core/Logo";
 import dynamic from "next/dynamic";
-import { FolderOpen } from "lucide-react";
 
 const WebcamPoseTracking = dynamic(
   () => import("./components/tracking/WebcamPoseTracking"),
@@ -21,18 +20,6 @@ export default function Home() {
     e.preventDefault();
     if (url) {
       router.push(`/tracking?youtubeUrl=${encodeURIComponent(url)}`);
-    }
-  };
-
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const videoUrl = URL.createObjectURL(file);
-      router.push(
-        `/tracking?videoUrl=${encodeURIComponent(
-          videoUrl
-        )}&videoId=${encodeURIComponent(file.name)}`
-      );
     }
   };
 
@@ -102,19 +89,6 @@ export default function Home() {
           />
           <Button type="submit">Start Tracking</Button>
         </Form>
-
-        <UploadSection htmlFor="video-upload">
-          <input
-            id="video-upload"
-            type="file"
-            accept="video/mp4,video/webm,video/quicktime"
-            onChange={handleFileUpload}
-            style={{ display: "none" }}
-          />
-          <FolderOpen size={48} color="#ffffff" opacity={0.8} />
-          <UploadText>Click to upload a video</UploadText>
-          <UploadSubtext>MP4, WebM or MOV</UploadSubtext>
-        </UploadSection>
 
         <FeedbackText $color={borderColor}>
           {displayedFeedback}
@@ -261,41 +235,6 @@ const Button = styled.button`
   &:active {
     transform: translateY(0);
   }
-`;
-
-const UploadSection = styled.label`
-  margin-top: 40px;
-  padding: 40px;
-  border: 2px dashed rgba(255, 255, 255, 0.2);
-  border-radius: 16px;
-  color: #a1a1aa;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  gap: 16px;
-  transition: all 0.2s;
-  background: rgba(255, 255, 255, 0.02);
-  cursor: pointer;
-
-  &:hover {
-    border-color: #4285f4;
-    background: rgba(66, 133, 244, 0.05);
-    color: #e4e4e7;
-  }
-`;
-
-const UploadText = styled.div`
-  font-size: 16px;
-  font-weight: 500;
-  margin-top: 16px;
-  color: #ffffff;
-`;
-
-const UploadSubtext = styled.p`
-  margin-top: 8px;
-  font-size: 0.8rem;
-  color: rgba(255, 255, 255, 0.5);
 `;
 
 const FeedbackText = styled.p<{ $color: string }>`

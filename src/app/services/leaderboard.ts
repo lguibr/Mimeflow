@@ -5,12 +5,12 @@ import { initializeAppCheck, ReCaptchaV3Provider } from "firebase/app-check";
 
 // ⚠️ CONFIGURATION: From your Low-Score Project Console
 const leaderboardConfig = {
-  apiKey: "AIzaSyBw3ckXz5iRa-eLCwezYRXRUn7g0kR5SgQ",
-  authDomain: "lowscore-f2f44.firebaseapp.com",
-  projectId: "lowscore-f2f44",
-  storageBucket: "lowscore-f2f44.firebasestorage.app",
-  messagingSenderId: "193861170906",
-  appId: "1:193861170906:web:eab654b117cd1570f8d7e3",
+  apiKey: import.meta.env.VITE_LEADERBOARD_API_KEY,
+  authDomain: import.meta.env.VITE_LEADERBOARD_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_LEADERBOARD_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_LEADERBOARD_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_LEADERBOARD_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_LEADERBOARD_APP_ID,
 };
 
 // Initialize SECONDARY App
@@ -22,7 +22,7 @@ if (typeof window !== "undefined" && location.hostname === "localhost") {
 }
 
 initializeAppCheck(lbApp, {
-  provider: new ReCaptchaV3Provider("6LdjmSIsAAAAAIECYMp4U4CzK3uNRvsMm-C8jEid"),
+  provider: new ReCaptchaV3Provider(import.meta.env.VITE_RECAPTCHA_SITE_KEY),
   isTokenAutoRefreshEnabled: true,
 });
 

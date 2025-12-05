@@ -59,6 +59,11 @@ const PoseTracking: React.FC<PoseTrackingProps> = ({
         }
       };
 
+      // Cleanup observer when sketch is removed/re-run (though sketch scope is tricky)
+      // Actually, we should attach observer in the outer useEffect, not inside the sketch closure to be safe,
+      // but p5 instance needs to be accessible.
+      // Let's attach it to the p instance for cleanup or handle it in the return of useEffect.
+
       p.draw = () => {
         // console.log("WebcamPoseTracking: p.draw");
         if (video && (video as any).loadedmetadata) {
@@ -177,11 +182,26 @@ const PoseTracking: React.FC<PoseTrackingProps> = ({
 
     p5InstanceRef.current = new p5(sketch);
 
+    // ResizeObserver for container changes
+    const resizeObserver = new ResizeObserver(() => {
+      if (p5InstanceRef.current && p5ContainerRef.current) {
+        const { width, height } =
+          p5ContainerRef.current.getBoundingClientRect();
+        p5InstanceRef.current.resizeCanvas(width, height);
+      }
+    });
+
+    if (p5ContainerRef.current) {
+      resizeObserver.observe(p5ContainerRef.current);
+    }
+
     return () => {
+      resizeObserver.disconnect();
       if (video) {
         video.remove();
         if (video.elt) video.elt.remove();
       }
+      p5InstanceRef.current?.remove();
     };
   }, [net, onVisibleCountChange]);
 

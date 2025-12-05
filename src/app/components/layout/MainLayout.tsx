@@ -41,7 +41,7 @@ const MainLayout: React.FC<MainLayoutProps> = ({
   }, []);
 
   return (
-    <div className="h-screen w-screen flex flex-col bg-background text-foreground overflow-hidden">
+    <div className="h-screen w-screen flex flex-col bg-black text-white overflow-hidden">
       {/* Header / Breadcrumb */}
       {/* Home Button */}
       <Link to="/" className="absolute top-4 left-4 z-50">
@@ -55,13 +55,11 @@ const MainLayout: React.FC<MainLayoutProps> = ({
         {leftPanel && rightPanel ? (
           <ResizablePanelGroup direction={direction} className="h-full w-full">
             <ResizablePanel defaultSize={50} minSize={30}>
-              <div className="h-full w-full relative bg-black/50">
-                {leftPanel}
-              </div>
+              <div className="h-full w-full relative bg-black">{leftPanel}</div>
             </ResizablePanel>
             <ResizableHandle withHandle className="bg-white/10" />
             <ResizablePanel defaultSize={50} minSize={30}>
-              <div className="h-full w-full relative bg-black/20">
+              <div className="h-full w-full relative bg-black">
                 {rightPanel}
               </div>
             </ResizablePanel>

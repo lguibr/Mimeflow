@@ -424,6 +424,7 @@ const YoutubePoseTracking: React.FC = () => {
       {showResult && (
         <ResultScreen
           score={score}
+          levelId={videoId || videoIdParam || "unknown"}
           onPlayAgain={handlePlayAgain}
           onTryAnother={handleTryAnother}
         />

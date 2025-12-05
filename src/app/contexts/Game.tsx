@@ -157,9 +157,9 @@ const GameProvider: React.FC<{
         },
         runningMode: "VIDEO" as const,
         numPoses: 1,
-        minPoseDetectionConfidence: 0.9,
-        minPosePresenceConfidence: 0.9,
-        minTrackingConfidence: 0.9,
+        minPoseDetectionConfidence: 0.5,
+        minPosePresenceConfidence: 0.5,
+        minTrackingConfidence: 0.5,
       };
 
       const video = await PoseLandmarker.createFromOptions(

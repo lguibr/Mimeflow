@@ -8,7 +8,19 @@ import WebcamPoseTracking from "@/app/components/tracking/WebcamPoseTracking";
 export default function Home() {
   const [url, setUrl] = useState("");
   const [visibleCount, setVisibleCount] = useState(0);
+  const [isDesktop, setIsDesktop] = useState(false);
   const navigate = useNavigate();
+
+  useEffect(() => {
+    setIsDesktop(window.innerWidth >= 1024);
+
+    const handleResize = () => {
+      setIsDesktop(window.innerWidth >= 1024);
+    };
+
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -75,19 +87,66 @@ export default function Home() {
             Beta
           </Badge>
         </Title>
-        <Subtitle>
-          Upload a video or paste a YouTube link to start matching poses.
-        </Subtitle>
+        <Subtitle>Upload a video to start matching poses.</Subtitle>
 
-        <Form onSubmit={handleSubmit}>
-          <Input
-            type="text"
-            placeholder="Paste YouTube Shorts URL, Video Link, or Video ID"
-            value={url}
-            onChange={(e) => setUrl(e.target.value)}
+        <UploadContainer
+          onDragOver={(e) => e.preventDefault()}
+          onDrop={(e) => {
+            e.preventDefault();
+            if (e.dataTransfer.files?.[0]) {
+              const file = e.dataTransfer.files[0];
+              // Navigate with file object in state
+              navigate("/tracking", { state: { file } });
+            }
+          }}
+        >
+          <UploadIcon>
+            <svg
+              width="48"
+              height="48"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+            >
+              <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4" />
+              <polyline points="17 8 12 3 7 8" />
+              <line x1="12" y1="3" x2="12" y2="15" />
+            </svg>
+          </UploadIcon>
+          <h3>Drag & Drop Video</h3>
+          <p>or click to browse</p>
+          <HiddenInput
+            type="file"
+            accept="video/*"
+            onChange={(e) => {
+              if (e.target.files?.[0]) {
+                const file = e.target.files[0];
+                navigate("/tracking", { state: { file } });
+              }
+            }}
           />
-          <Button type="submit">Start Tracking</Button>
-        </Form>
+        </UploadContainer>
+
+        {isDesktop && (
+          <SecondarySection>
+            <Divider>
+              <span>or use YouTube (Desktop Only • Screen Share)</span>
+            </Divider>
+
+            <Form onSubmit={handleSubmit}>
+              <Input
+                type="text"
+                placeholder="Paste YouTube Link or ID"
+                value={url}
+                onChange={(e) => setUrl(e.target.value)}
+              />
+              <SmallButton type="submit">Go</SmallButton>
+            </Form>
+          </SecondarySection>
+        )}
 
         <FeedbackText $color={borderColor}>
           {displayedFeedback}
@@ -189,19 +248,19 @@ const Subtitle = styled.p`
 
 const Form = styled.form`
   display: flex;
-  flex-direction: column;
-  gap: 20px;
-  max-width: 500px;
-  margin: 0 auto;
+  flex-direction: row;
+  gap: 12px;
+  width: 100%;
 `;
 
 const Input = styled.input`
-  padding: 20px;
+  flex: 1;
+  padding: 16px;
   border-radius: 12px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.05);
   color: white;
-  font-size: 18px;
+  font-size: 16px;
   outline: none;
   transition: all 0.2s;
 
@@ -264,5 +323,98 @@ const Cursor = styled.span`
     50% {
       opacity: 0;
     }
+  }
+`;
+
+const UploadContainer = styled.div`
+  width: 100%;
+  height: 220px;
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  transition: all 0.2s;
+  cursor: pointer;
+  margin-bottom: 30px;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(66, 133, 244, 0.5);
+    transform: scale(1.01);
+  }
+
+  h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 4px;
+  }
+
+  p {
+    color: #aaa;
+    font-size: 0.9rem;
+  }
+`;
+
+const UploadIcon = styled.div`
+  color: #4285f4;
+  margin-bottom: 16px;
+  opacity: 0.9;
+`;
+
+const HiddenInput = styled.input`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  opacity: 0;
+  cursor: pointer;
+`;
+
+const SecondarySection = styled.div`
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+`;
+
+const Divider = styled.div`
+  display: flex;
+  align-items: center;
+  color: rgba(255, 255, 255, 0.4);
+  font-size: 0.85rem;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  margin-bottom: 8px;
+
+  &::before,
+  &::after {
+    content: "";
+    flex: 1;
+    height: 1px;
+    background: rgba(255, 255, 255, 0.1);
+  }
+
+  span {
+    padding: 0 12px;
+  }
+`;
+
+const SmallButton = styled(Button)`
+  padding: 12px 24px;
+  font-size: 16px;
+  width: auto;
+  align-self: flex-end;
+  background: rgba(255, 255, 255, 0.1);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: translateY(-1px);
   }
 `;

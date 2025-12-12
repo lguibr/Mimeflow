@@ -1,6 +1,6 @@
 "use client";
 import React, { useRef, useEffect, useState } from "react";
-import { useSearchParams, useNavigate } from "react-router-dom";
+import { useSearchParams, useNavigate, useLocation } from "react-router-dom";
 import type p5 from "p5";
 import styled from "styled-components";
 import YouTube, { YouTubeProps } from "react-youtube";
@@ -42,11 +42,29 @@ const YoutubePoseTracking: React.FC = () => {
 
   const keyPoints = useRef<IKeypoint3D[]>([]);
   const processingFrameRate = useRef<number>(1);
+  const [videoSource, setVideoSource] = useState<"youtube" | "file" | null>(
+    null
+  );
+  const [uploadedFileUrl, setUploadedFileUrl] = useState<string | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
 
   const isDesktop = () =>
     typeof window !== "undefined" && window.innerWidth >= 1024;
+
+  // Retrieve file passed from Home, if any
+  const location = useLocation();
+
+  useEffect(() => {
+    // If a file was passed via state (from Home drag & drop), use it
+    if (location.state?.file) {
+      handleFileUpload(location.state.file);
+      // Clear state so we don't re-init on refresh if we don't want to?
+      // Actually navigate replace might be better but for now this works.
+    } else if (youtubeUrl) {
+      setVideoSource("youtube");
+    }
+  }, [youtubeUrl, location.state]);
 
   // Extract Video ID
   const getVideoId = (url: string | null) => {
@@ -57,7 +75,46 @@ const YoutubePoseTracking: React.FC = () => {
     return match ? match[1] : /^[a-zA-Z0-9_-]{11}$/.test(url) ? url : null;
   };
 
-  const videoId = getVideoId(youtubeUrl);
+  const [videoId, setVideoId] = useState<string | null>(getVideoId(youtubeUrl));
+  // Removed unused fileHash state to fix lint warning
+
+  const calculateFileHash = async (file: File): Promise<string> => {
+    const buffer = await file.arrayBuffer();
+    const hashBuffer = await crypto.subtle.digest("SHA-256", buffer);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const hashHex = hashArray
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+    return hashHex;
+  };
+
+  const handleFileUpload = async (
+    msg: React.ChangeEvent<HTMLInputElement> | File
+  ) => {
+    const file =
+      msg instanceof File ? msg : msg.target.files ? msg.target.files[0] : null;
+
+    if (file) {
+      try {
+        const hash = await calculateFileHash(file);
+        // Use hash as the videoId equivalent for leaderboards
+        setVideoId(`file-${hash}`);
+
+        const url = URL.createObjectURL(file);
+        setUploadedFileUrl(url);
+        setVideoSource("file");
+
+        if (capturedVideoRef.current) {
+          capturedVideoRef.current.src = url;
+          capturedVideoRef.current.play();
+          togglePause(false); // Enable scoring
+          setIsCapturing(true);
+        }
+      } catch (err) {
+        console.error("Error hashing file:", err);
+      }
+    }
+  };
 
   // Initialize offscreen canvas
   useEffect(() => {
@@ -68,6 +125,24 @@ const YoutubePoseTracking: React.FC = () => {
 
   // Start Screen Capture
   const startCapture = async () => {
+    // If playing a local file, we don't need screen capture
+    if (videoSource === "file") {
+      if (capturedVideoRef.current) {
+        capturedVideoRef.current.play();
+        togglePause(false); // Enable scoring
+        setIsCapturing(true);
+      }
+      return;
+    }
+
+    // Check if screen sharing is supported
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
+      alert(
+        "Screen sharing is not supported on this device or browser. Please try using a desktop computer."
+      );
+      return;
+    }
+
     try {
       const captureStream = await navigator.mediaDevices.getDisplayMedia({
         video: {
@@ -80,6 +155,7 @@ const YoutubePoseTracking: React.FC = () => {
       if (capturedVideoRef.current) {
         capturedVideoRef.current.srcObject = captureStream;
         capturedVideoRef.current.play();
+        togglePause(false); // Enable scoring
         setIsCapturing(true);
 
         // Handle stream stop (user clicks "Stop sharing")
@@ -87,17 +163,25 @@ const YoutubePoseTracking: React.FC = () => {
           stopCapture();
         };
       }
-    } catch (err) {
+    } catch (err: any) {
       console.error("Error starting screen capture:", err);
+      // Don't show alert if user just cancelled the selection
+      if (err.name !== "NotAllowedError") {
+        alert(`Failed to start screen sharing: ${err.message || err}`);
+      }
     }
   };
 
   const stopCapture = () => {
-    if (capturedVideoRef.current && capturedVideoRef.current.srcObject) {
-      const stream = capturedVideoRef.current.srcObject as MediaStream;
-      stream.getTracks().forEach((track) => track.stop());
-      capturedVideoRef.current.srcObject = null;
+    if (capturedVideoRef.current) {
+      if (capturedVideoRef.current.srcObject) {
+        const stream = capturedVideoRef.current.srcObject as MediaStream;
+        stream.getTracks().forEach((track) => track.stop());
+        capturedVideoRef.current.srcObject = null;
+      }
+      capturedVideoRef.current.pause();
     }
+    togglePause(true); // Pause scoring
     setIsCapturing(false);
   };
 
@@ -247,7 +331,7 @@ const YoutubePoseTracking: React.FC = () => {
                   offscreenCanvas.height
                 );
 
-                // Draw new frame
+                // Draw new frame to offscreen canvas (for MediaPipe detection)
                 try {
                   ctx.drawImage(
                     video,
@@ -260,8 +344,21 @@ const YoutubePoseTracking: React.FC = () => {
                     offscreenCanvas.width,
                     offscreenCanvas.height // Destination: full offscreen canvas
                   );
+
+                  // If using a file, we want to render the video visible to the user.
+                  // Since there is no background YouTube player, we draw the video on the P5 canvas.
+                  if (!youtubeContainerRef.current) {
+                    // Use native context for performance and robustness
+                    const p5Ctx = (p as any)
+                      .drawingContext as CanvasRenderingContext2D;
+                    if (p5Ctx) {
+                      // Draw the FULL offscreen canvas (which contains the processed/cropped frame)
+                      // to the FULL p5 canvas.
+                      p5Ctx.drawImage(offscreenCanvas, 0, 0, p.width, p.height);
+                    }
+                  }
                 } catch (e) {
-                  console.error("Error drawing video to offscreen canvas:", e);
+                  console.error("Error drawing video:", e);
                 }
               }
 
@@ -343,7 +440,7 @@ const YoutubePoseTracking: React.FC = () => {
     return () => {
       p5InstanceRef.current?.remove();
     };
-  }, [net]);
+  }, [net, videoSource]);
 
   // Cleanup
   useEffect(() => {
@@ -366,15 +463,24 @@ const YoutubePoseTracking: React.FC = () => {
 
   return (
     <Container>
-      {!youtubeUrl && (
-        <Placeholder>No video selected. Go back to Home.</Placeholder>
-      )}
-
       <VideoContainer>
         {/* Hidden video element for processing the captured stream */}
-        <HiddenVideo ref={capturedVideoRef} muted playsInline />
+        <HiddenVideo
+          ref={capturedVideoRef}
+          playsInline
+          onEnded={() => {
+            if (videoSource === "file") {
+              togglePause(true);
+              if (videoId) {
+                saveScore(videoId);
+              }
+              setShowResult(true);
+              setIsCapturing(false);
+            }
+          }}
+        />
 
-        {videoId ? (
+        {videoId && videoSource === "youtube" ? (
           <div
             ref={youtubeContainerRef}
             style={{ width: "100%", height: "100%", cursor: "pointer" }}
@@ -405,16 +511,82 @@ const YoutubePoseTracking: React.FC = () => {
           </div>
         ) : null}
 
+        {videoSource === "file" &&
+          uploadedFileUrl &&
+          // We can just rely on the HiddenVideo playing and the canvas rendering it.
+          // But we might want to show the video itself for the user to see what they uploaded
+          // instead of just the hidden element.
+          // Actually currently the P5 canvas renders the video frame, so we don't need another video element visible.
+          // But we need to update the resize logic because 'youtubeContainerRef' won't exist.
+          null}
+
         <CanvasContainer ref={p5ContainerRef} />
 
         {!isCapturing && (
           <Overlay>
-            <StartButton onClick={startCapture}>
-              Start Game & Share Screen
-            </StartButton>
-            <InstructionText>
-              Click to start. Select &quot;This Tab&quot; in the popup window.
-            </InstructionText>
+            {!videoSource ? (
+              <SelectionContainer>
+                <UploadZone
+                  onDragOver={(e: React.DragEvent<HTMLDivElement>) =>
+                    e.preventDefault()
+                  }
+                  onDrop={(e: React.DragEvent<HTMLDivElement>) => {
+                    e.preventDefault();
+                    if (e.dataTransfer.files?.[0]) {
+                      handleFileUpload(e.dataTransfer.files[0]);
+                    }
+                  }}
+                >
+                  <h3>Upload Video File</h3>
+                  <p>Drag & Drop or Click to Browse</p>
+                  <input
+                    type="file"
+                    accept="video/*"
+                    onChange={handleFileUpload}
+                    style={{
+                      position: "absolute",
+                      width: "100%",
+                      height: "100%",
+                      opacity: 0,
+                      cursor: "pointer",
+                    }}
+                  />
+                </UploadZone>
+                {isDesktop() && (
+                  <div style={{ marginTop: 20 }}>
+                    <p style={{ color: "#aaa", fontSize: 14 }}>
+                      Or go back to use{" "}
+                      <span style={{ color: "#f00" }}>YouTube</span> (Desktop
+                      Only • Screen Share)
+                    </p>
+                  </div>
+                )}
+              </SelectionContainer>
+            ) : videoSource === "youtube" ? (
+              <>
+                <StartButton onClick={startCapture} onTouchEnd={startCapture}>
+                  Start Game & Share Screen
+                </StartButton>
+                <InstructionText>
+                  Experimental Feature: Select &quot;This Tab&quot; in the popup
+                  window.
+                </InstructionText>
+              </>
+            ) : (
+              // Video Source is file, but not capturing yet?
+              // Logic above sets isCapturing=true immediately on upload.
+              // So this branch might be unreachable or for replay.
+              <StartButton
+                onClick={() => {
+                  if (capturedVideoRef.current) {
+                    capturedVideoRef.current.play();
+                    setIsCapturing(true);
+                  }
+                }}
+              >
+                Start Game
+              </StartButton>
+            )}
           </Overlay>
         )}
 
@@ -507,14 +679,6 @@ const InstructionText = styled.p`
   color: #ccc;
   margin-top: 15px;
   font-size: 14px;
-`;
-
-const Placeholder = styled.div`
-  flex: 1;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #666;
 `;
 
 // Performance Overlay Component
@@ -701,4 +865,43 @@ const PerfScore = styled.div`
   min-width: 60px;
   text-align: right;
   text-shadow: 0 2px 4px rgba(0, 0, 0, 0.5);
+`;
+
+const SelectionContainer = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
+  max-width: 500px;
+`;
+
+const UploadZone = styled.div`
+  width: 100%;
+  height: 200px;
+  border: 2px dashed rgba(255, 255, 255, 0.2);
+  border-radius: 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  background: rgba(255, 255, 255, 0.05);
+  transition: all 0.2s;
+
+  &:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-color: rgba(255, 255, 255, 0.4);
+  }
+
+  h3 {
+    font-size: 1.5rem;
+    font-weight: 600;
+    color: white;
+    margin-bottom: 8px;
+  }
+
+  p {
+    color: #aaa;
+  }
 `;

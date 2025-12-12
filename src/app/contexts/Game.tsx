@@ -109,18 +109,64 @@ const GameProvider: React.FC<{
     return [];
   }, [videoPoses]);
 
+  const videoPointsBuffer = useRef<IKeypoint3D[][]>([]);
+  const webcamPointsBuffer = useRef<IKeypoint3D[][]>([]);
+  const evaluationFrameCount = useRef(0);
+
   useEffect(() => {
     if (webcamPoints3d.length > 0 && videoPoints3d.length > 0) {
       if (!isPaused) {
-        // Mirror the webcam points to match the user's mirrored view
-        // This ensures that if the user raises their right hand (screen right),
-        // it matches the dancer's left hand (screen right).
-        const mirroredWebcamPoints = mirrorLandmarks(webcamPoints3d);
+        // 1. Maintain Buffers (Double Buffering)
+        // Store last ~20 frames for BOTH video and webcam to allow full temporal flexibility
+        if (videoPoints3d.length > 0) {
+          videoPointsBuffer.current.push(videoPoints3d);
+          if (videoPointsBuffer.current.length > 20) {
+            // Keep last ~20 frames (approx 330ms at 60fps)
+            videoPointsBuffer.current.shift();
+          }
+        }
 
-        const rawSimilarity = cosineSimilarity(
-          mirroredWebcamPoints,
-          videoPoints3d
-        );
+        // Mirror the webcam points first to match data format
+        const mirroredWebcamPoints = mirrorLandmarks(webcamPoints3d);
+        if (mirroredWebcamPoints.length > 0) {
+          webcamPointsBuffer.current.push(mirroredWebcamPoints);
+          if (webcamPointsBuffer.current.length > 20) {
+            webcamPointsBuffer.current.shift();
+          }
+        }
+
+        // 2. Throttle Evaluation (1/3 of frames)
+        evaluationFrameCount.current += 1;
+        if (evaluationFrameCount.current % 3 !== 0) {
+          return;
+        }
+
+        // 3. Double Buffer Matching (Matrix Comparison)
+        // Compare EVERY recorded webcam frame against EVERY recorded video frame in the buffer window.
+        // This finds the "best possible match" that happened recently, regardless of if the user
+        // was early, late, or right on time.
+        let maxSimilarity = 0;
+
+        const videoCandidates =
+          videoPointsBuffer.current.length > 0
+            ? videoPointsBuffer.current
+            : [videoPoints3d];
+
+        const webcamCandidates =
+          webcamPointsBuffer.current.length > 0
+            ? webcamPointsBuffer.current
+            : [mirroredWebcamPoints];
+
+        for (const videoFrame of videoCandidates) {
+          for (const webcamFrame of webcamCandidates) {
+            const sim = cosineSimilarity(webcamFrame, videoFrame);
+            if (sim > maxSimilarity) {
+              maxSimilarity = sim;
+            }
+          }
+        }
+
+        const rawSimilarity = maxSimilarity;
         const sigmoidedSimilarity = sigmoidTransformAdjusted(
           rawSimilarity,
           5,
@@ -183,10 +229,6 @@ const GameProvider: React.FC<{
     return () => clearTimeout(debounced);
   }, [loaded]);
 
-  useEffect(() => {
-    !isPaused && setHistory((prev) => [...prev, score]);
-  }, [isPaused, score]);
-
   const scoreRef = useRef(score);
   const similarityRef = useRef(similarity);
   const historyRef = useRef(history);
@@ -204,7 +246,9 @@ const GameProvider: React.FC<{
   }, [history]);
 
   const togglePause = useCallback((value?: boolean) => {
-    setIsPaused((prevIsPaused) => (value ? value : !prevIsPaused));
+    setIsPaused((prevIsPaused) =>
+      value !== undefined ? value : !prevIsPaused
+    );
   }, []);
 
   const saveScore = useCallback(async (videoId: string) => {

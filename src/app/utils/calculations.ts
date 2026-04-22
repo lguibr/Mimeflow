@@ -119,9 +119,8 @@ export function extractFeaturesFromKeypoints(
     ].map((feature) => feature);
   });
 
-  const angleTriples = generateUniqueTriples(connections);
-  angleTriples.forEach((triple) => {
-    const [firstIndex, secondIndex, thirdIndex] = triple.map(Number);
+  CACHED_ANGLE_TRIPLES.forEach((triple) => {
+    const [firstIndex, secondIndex, thirdIndex] = triple;
     const keypointOne = keypoints[firstIndex];
     const keypointTwo = keypoints[secondIndex];
     const keypointThree = keypoints[thirdIndex];
@@ -233,6 +232,8 @@ export function generateUniqueTriples(
     triple.split(",").map(Number)
   );
 }
+
+const CACHED_ANGLE_TRIPLES = generateUniqueTriples(connections);
 
 export function generateAllPermutations(n: number, r: number): number[][] {
   const result: number[][] = [];

@@ -13,7 +13,12 @@ import ResultScreen from "@/app/components/score/ResultScreen";
 const YoutubePoseTracking: React.FC = () => {
   const [searchParams] = useSearchParams();
   const youtubeUrl = searchParams.get("youtubeUrl");
-  const videoIdParam = searchParams.get("videoId");
+  const videoIdParamRaw = searchParams.get("videoId");
+  // Validate videoIdParam if present (should be a valid 11-char YouTube ID)
+  const videoIdParam =
+    videoIdParamRaw && /^[a-zA-Z0-9_-]{11}$/.test(videoIdParamRaw)
+      ? videoIdParamRaw
+      : null;
 
   const { videoNet: net, similarity, score } = useGameViews();
   const {
@@ -69,10 +74,33 @@ const YoutubePoseTracking: React.FC = () => {
   // Extract Video ID
   const getVideoId = (url: string | null) => {
     if (!url) return null;
-    const match = url.match(
-      /(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?|shorts)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/
-    );
-    return match ? match[1] : /^[a-zA-Z0-9_-]{11}$/.test(url) ? url : null;
+
+    // Standard YouTube URL regex anchored to the start
+    const youtubeRegex =
+      /^(?:https?:\/\/)?(?:www\.)?(?:youtube\.com\/(?:[^\/\n\s]+\/\S+\/|(?:v|e(?:mbed)?|shorts)\/|\S*?[?&]v=)|youtu\.be\/)([a-zA-Z0-9_-]{11})/;
+    const match = url.match(youtubeRegex);
+
+    if (match) {
+      // If it looks like a URL (contains protocol), perform extra domain validation
+      if (url.includes("://")) {
+        try {
+          const urlObj = new URL(url);
+          if (!["http:", "https:"].includes(urlObj.protocol)) return null;
+          if (
+            !["youtube.com", "www.youtube.com", "youtu.be"].includes(
+              urlObj.hostname
+            )
+          )
+            return null;
+        } catch (e) {
+          return null;
+        }
+      }
+      return match[1];
+    }
+
+    // Check if it's a plain 11-character YouTube ID
+    return /^[a-zA-Z0-9_-]{11}$/.test(url) ? url : null;
   };
 
   const [videoId, setVideoId] = useState<string | null>(getVideoId(youtubeUrl));
@@ -208,11 +236,19 @@ const YoutubePoseTracking: React.FC = () => {
     if (youtubeUrl) {
       try {
         const urlObj = new URL(youtubeUrl);
-        const tParam = urlObj.searchParams.get("t");
-        if (tParam) {
-          const startTime = parseInt(tParam);
-          if (!isNaN(startTime)) {
-            event.target.seekTo(startTime);
+        // Security check: Only process time parameters for valid YouTube URLs
+        if (
+          ["http:", "https:"].includes(urlObj.protocol) &&
+          ["youtube.com", "www.youtube.com", "youtu.be"].includes(
+            urlObj.hostname
+          )
+        ) {
+          const tParam = urlObj.searchParams.get("t");
+          if (tParam) {
+            const startTime = parseInt(tParam);
+            if (!isNaN(startTime)) {
+              event.target.seekTo(startTime);
+            }
           }
         }
       } catch (e) {

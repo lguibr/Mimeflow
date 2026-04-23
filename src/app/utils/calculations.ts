@@ -13,60 +13,19 @@ export interface IKeypoint3D {
 // MediaPipe Pose Connections
 export const connections = PoseLandmarker.POSE_CONNECTIONS;
 
-function findMidpoint(point1: IKeypoint3D, point2: IKeypoint3D): IKeypoint3D {
-  return {
-    x: (point1.x + point2.x) / 2,
-    y: (point1.y + point2.y) / 2,
-    z: ((point1.z || 0) + (point2.z || 0)) / 2,
-  };
-}
-
-const getHipsMiddlePoint = (points: IKeypoint3D[]): IKeypoint3D => {
-  // MediaPipe landmarks don't have names by default in the array, but we can map indices if needed.
-  // However, the original code seems to rely on names which might not be present in the raw array from MediaPipe.
-  // We should probably update this to use indices if possible, or ensure we map names.
-  // For now, let's assume points might not have names and we should use indices.
-  // Left Hip: 23, Right Hip: 24
-  const rightHip = points[24];
-  const leftHip = points[23];
-  if (rightHip && leftHip) return findMidpoint(leftHip, rightHip);
-  return {
-    x: 0,
-    y: 0,
-    z: 0,
-  };
+const JOINT_WEIGHTS: Record<number, number> = {
+  // Head / Face can be jittery, low weight
+  0: 0.1, 1: 0.1, 2: 0.1, 3: 0.1, 4: 0.1, 5: 0.1, 6: 0.1, 7: 0.1, 8: 0.1, 9: 0.1, 10: 0.1,
+  // Torso / Shoulders
+  11: 1.0, 12: 1.0, 23: 1.0, 24: 1.0,
+  // Arms
+  13: 1.5, 14: 1.5, 15: 2.0, 16: 2.0,
+  // Legs
+  25: 1.5, 26: 1.5, 27: 2.0, 28: 2.0,
+  // Hands and Feet
+  17: 1.0, 18: 1.0, 19: 1.0, 20: 1.0, 21: 1.0, 22: 1.0,
+  29: 1.0, 30: 1.0, 31: 1.0, 32: 1.0,
 };
-
-const getShoulderMiddlePoint = (points: IKeypoint3D[]) => {
-  // Left Shoulder: 11, Right Shoulder: 12
-  const rightShoulder = points[12];
-  const leftShoulder = points[11];
-  if (rightShoulder && leftShoulder)
-    return findMidpoint(leftShoulder, rightShoulder);
-  return {
-    x: 0,
-    y: 0,
-    z: 0,
-  };
-};
-
-const getCenterPoint = (points: IKeypoint3D[]): IKeypoint3D => {
-  const hipsMiddlePoint = getHipsMiddlePoint(points);
-  const shoulderMiddlePoint = getShoulderMiddlePoint(points);
-  return findMidpoint(hipsMiddlePoint, shoulderMiddlePoint);
-};
-
-function centralizePoints(
-  keypoints: IKeypoint3D[],
-  centerPoint: IKeypoint3D
-): IKeypoint3D[] {
-  return keypoints.map((keypoint) => ({
-    ...keypoint,
-    x: keypoint.x - centerPoint.x,
-    y: keypoint.y - centerPoint.y,
-    z: keypoint.z !== undefined ? keypoint.z - (centerPoint.z ?? 0) : undefined,
-  }));
-}
 
 // Helper functions for vector math
 function dotProduct(a: number[], b: number[]): number {
@@ -78,15 +37,9 @@ function magnitude(a: number[]): number {
 }
 
 export function cosineSimilarity(
-  unCentralizedPoseOne: IKeypoint3D[],
-  unCentralizedPoseTwo: IKeypoint3D[]
+  poseOne: IKeypoint3D[],
+  poseTwo: IKeypoint3D[]
 ): number {
-  const newPoseOneCenter = getCenterPoint(unCentralizedPoseOne);
-  const newPoseTwoCenter = getCenterPoint(unCentralizedPoseTwo);
-
-  const poseOne = centralizePoints(unCentralizedPoseOne, newPoseOneCenter);
-  const poseTwo = centralizePoints(unCentralizedPoseTwo, newPoseTwoCenter);
-
   const featuresOne = extractFeaturesFromKeypoints(poseOne);
   const featuresTwo = extractFeaturesFromKeypoints(poseTwo);
 
@@ -102,157 +55,49 @@ export function cosineSimilarity(
 export function extractFeaturesFromKeypoints(
   keypoints: IKeypoint3D[]
 ): number[] {
-  const features: number[] = keypoints.flatMap((keypoint) => {
-    // We can't rely on names anymore if we just pass the array.
-    // We should probably use index based weights if needed, or just default to 1.
-    // For now, let's assume default weight 1 if name lookup fails.
-    // Or we could map indices to names.
-    const scoreWeighted = keypoint.score || keypoint.visibility || 1;
+  const features: number[] = [];
 
-    // TODO: Implement index-based weight lookup if critical.
-    const defaultWeight = 1;
+  connections.forEach((conn) => {
+    const kp1 = keypoints[conn.start];
+    const kp2 = keypoints[conn.end];
 
-    return [
-      keypoint.x * scoreWeighted * defaultWeight,
-      keypoint.y * scoreWeighted * defaultWeight,
-      (keypoint.z || 0) * scoreWeighted * defaultWeight,
-    ].map((feature) => feature);
-  });
+    if (kp1 && kp2) {
+      const score1 = kp1.score ?? kp1.visibility ?? 0;
+      const score2 = kp2.score ?? kp2.visibility ?? 0;
+      const avgScore = (score1 + score2) / 2;
 
-  CACHED_ANGLE_TRIPLES.forEach((triple) => {
-    const [firstIndex, secondIndex, thirdIndex] = triple;
-    const keypointOne = keypoints[firstIndex];
-    const keypointTwo = keypoints[secondIndex];
-    const keypointThree = keypoints[thirdIndex];
+      const weight1 = JOINT_WEIGHTS[conn.start] ?? 1.0;
+      const weight2 = JOINT_WEIGHTS[conn.end] ?? 1.0;
+      const weight = (weight1 + weight2) / 2;
 
-    if (keypointOne && keypointTwo && keypointThree) {
-      const { phi, theta } = calculateSphericalAngles(
-        keypointOne,
-        keypointTwo,
-        keypointThree
-      );
+      const combinedWeight = avgScore * weight;
 
-      const scoreWeighted = [
-        keypointOne.score || keypointOne.visibility || 0,
-        keypointTwo.score || keypointTwo.visibility || 0,
-        keypointThree.score || keypointThree.visibility || 0,
-      ].map((s) => s || 1);
+      // Only include vectors if both points are reasonably visible
+      if (avgScore > 0.3) {
+        const vector = [
+          kp2.x - kp1.x,
+          kp2.y - kp1.y,
+          (kp2.z || 0) - (kp1.z || 0)
+        ];
 
-      const averageScore =
-        (scoreWeighted[0] + scoreWeighted[1] + scoreWeighted[2]) / 3;
-      if (averageScore >= 0.5) {
-        features.push(phi * averageScore, theta * averageScore);
+        const mag = Math.sqrt(vector[0]*vector[0] + vector[1]*vector[1] + vector[2]*vector[2]);
+
+        if (mag > 0) {
+          features.push((vector[0] / mag) * combinedWeight);
+          features.push((vector[1] / mag) * combinedWeight);
+          features.push((vector[2] / mag) * combinedWeight);
+        } else {
+          features.push(0, 0, 0);
+        }
       } else {
-        features.push(0, 0);
+        features.push(0, 0, 0);
       }
+    } else {
+      features.push(0, 0, 0);
     }
   });
 
   return features;
-}
-
-export function calculateSphericalAngles(
-  keypointOne: IKeypoint3D,
-  keypointTwo: IKeypoint3D,
-  keypointThree: IKeypoint3D
-): { theta: number; phi: number } {
-  const scoreSum =
-    (keypointOne?.score || keypointOne?.visibility || 0) +
-    (keypointTwo?.score || keypointTwo?.visibility || 0) +
-    (keypointThree?.score || keypointThree?.visibility || 0);
-  const averageScore = scoreSum / 3;
-
-  const vectorOne = [
-    (keypointTwo.x - keypointOne.x) * averageScore,
-    (keypointTwo.y - keypointOne.y) * averageScore,
-    ((keypointTwo.z || 0) - (keypointOne.z || 0)) * averageScore,
-  ];
-
-  const vectorTwo = [
-    (keypointThree.x - keypointTwo.x) * averageScore,
-    (keypointThree.y - keypointTwo.y) * averageScore,
-    ((keypointThree.z || 0) - (keypointTwo.z || 0)) * averageScore,
-  ];
-
-  const vectorOneSpherical = cartesianToSpherical(vectorOne);
-  const vectorTwoSpherical = cartesianToSpherical(vectorTwo);
-
-  const thetaDifference = Math.abs(
-    vectorOneSpherical.theta - vectorTwoSpherical.theta
-  );
-  const phiDifference = Math.abs(
-    vectorOneSpherical.phi - vectorTwoSpherical.phi
-  );
-
-  return { theta: thetaDifference, phi: phiDifference };
-}
-
-export function cartesianToSpherical(vector: number[]): {
-  r: number;
-  theta: number;
-  phi: number;
-} {
-  const x = vector[0];
-  const y = vector[1];
-  const z = vector[2];
-
-  const r = Math.sqrt(x * x + y * y + z * z);
-  // Avoid division by zero if r is 0
-  const theta = r === 0 ? 0 : Math.acos(z / r);
-  const phi = Math.atan2(y, x);
-
-  return { r, theta, phi };
-}
-
-export function generateUniqueTriples(
-  pairs: { start: number; end: number }[]
-): number[][] {
-  const uniqueTriples = new Set<string>();
-
-  const map = new Map<number, Set<number>>();
-  pairs.forEach(({ start: a, end: b }) => {
-    if (!map.has(a)) map.set(a, new Set());
-    if (!map.has(b)) map.set(b, new Set());
-    map.get(a)?.add(b);
-    map.get(b)?.add(a);
-  });
-
-  pairs.forEach(({ start: first, end: second }) => {
-    const connectedToFirst = map.get(first);
-    const connectedToSecond = map.get(second);
-    connectedToFirst?.forEach((third: number) => {
-      if (connectedToSecond?.has(third)) {
-        const sortedTriple = [first, second, third].sort((a, b) => a - b);
-        uniqueTriples.add(sortedTriple.join(","));
-      }
-    });
-  });
-
-  return Array.from(uniqueTriples).map((triple) =>
-    triple.split(",").map(Number)
-  );
-}
-
-const CACHED_ANGLE_TRIPLES = generateUniqueTriples(connections);
-
-export function generateAllPermutations(n: number, r: number): number[][] {
-  const result: number[][] = [];
-
-  function backtrack(combination: number[], start: number) {
-    if (combination.length === r) {
-      result.push([...combination]);
-      return;
-    }
-
-    for (let i = start; i < n; i++) {
-      combination.push(i);
-      backtrack(combination, i + 1);
-      combination.pop();
-    }
-  }
-
-  backtrack([], 0);
-  return result;
 }
 
 export function sigmoidTransformAdjusted(

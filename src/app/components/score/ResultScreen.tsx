@@ -1,7 +1,7 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
-import ScoreGraph from "./ScoreGraph";
 import { Trophy, RefreshCw, Home, Crown } from "lucide-react";
+import { AnalyticsDashboard } from "./AnalyticsDashboard";
 import { useAuth } from "@/app/contexts/Auth";
 import {
   sendHighScore,
@@ -82,47 +82,14 @@ const ResultScreen: React.FC<ResultScreenProps> = ({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/95 backdrop-blur-md animate-in fade-in duration-300 overflow-y-auto py-10">
       <div className="w-full max-w-5xl p-4 md:p-8 mx-auto relative flex flex-col md:flex-row gap-8">
-        {/* LEFT COLUMN: Current Score */}
-        <div className="flex-1 relative overflow-hidden rounded-3xl border border-white/10 bg-black/60 backdrop-blur-xl shadow-2xl p-8 flex flex-col items-center text-center">
-          {/* Background Glows */}
-          <div className="absolute -top-24 -left-24 w-48 h-48 bg-blue-500/20 rounded-full blur-3xl pointer-events-none" />
-          <div className="absolute -bottom-24 -right-24 w-48 h-48 bg-purple-500/20 rounded-full blur-3xl pointer-events-none" />
-
-          {/* Header */}
-          <div className="mb-6 relative z-10 w-full">
-            <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-yellow-400/20 to-orange-500/20 border border-yellow-500/30 shadow-[0_0_30px_rgba(234,179,8,0.2)]">
-              {isTopScore ? (
-                <Crown className="h-10 w-10 text-yellow-400 drop-shadow-lg animate-bounce" />
-              ) : (
-                <Trophy className="h-10 w-10 text-yellow-400 drop-shadow-lg" />
-              )}
-            </div>
-            <h2 className="text-4xl font-black text-white mb-2 tracking-tight">
-              {isTopScore
-                ? leaderboard.length > 0 && score > leaderboard[0].score
-                  ? "New World Record!"
-                  : "Top 10 Score!"
-                : "Game Over"}
-            </h2>
-            <p className="text-lg text-white/60 font-medium">
-              {isTopScore ? "You made the Leaderboard!" : "Performance Summary"}
-            </p>
-          </div>
-
-          {/* Score Info */}
-          <div className="mb-8 relative z-10">
-            <div className="text-8xl font-black tracking-tighter bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent drop-shadow-2xl">
-              {Math.round(score)}
-            </div>
-            <div className="text-xl font-bold text-white/40 uppercase tracking-widest mt-1">
-              Total Points
-            </div>
-          </div>
-
-          {/* Chart */}
-          <div className="w-full h-48 mb-8 rounded-2xl border border-white/5 bg-black/20 p-4 relative z-10">
-            <ScoreGraph />
-          </div>
+        {/* LEFT COLUMN: Analytics Dashboard */}
+        <div className="flex-1 flex flex-col gap-4">
+          <AnalyticsDashboard 
+            score={Math.round(score)} 
+            maxStreak={0} 
+            onPlayAgain={onPlayAgain}
+            onTryAnother={onTryAnother}
+          />
 
           {/* Actions */}
           <div className="flex flex-col gap-4 w-full relative z-10 mt-auto">

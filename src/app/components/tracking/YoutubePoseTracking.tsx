@@ -9,6 +9,7 @@ import { draw2DKeyPoints } from "@/app/utils/draw";
 import { useGameActions, useGameViews } from "@/app/contexts/Game";
 import { IKeypoint3D } from "@/app/utils/calculations";
 import ResultScreen from "@/app/components/score/ResultScreen";
+import { BurnBar } from "@/app/components/ui/BurnBar";
 
 const YoutubePoseTracking: React.FC = () => {
   const [searchParams] = useSearchParams();
@@ -53,6 +54,16 @@ const YoutubePoseTracking: React.FC = () => {
   const [uploadedFileUrl, setUploadedFileUrl] = useState<string | null>(null);
   const [showResult, setShowResult] = useState(false);
   const [isCapturing, setIsCapturing] = useState(false);
+
+  // Gamification: Flow State Momentum
+  const [momentum, setMomentum] = useState(0);
+  useEffect(() => {
+    if (similarity > 0.6) {
+      setMomentum((prev) => Math.min(prev + (similarity - 0.5) * 5, 100));
+    } else {
+      setMomentum((prev) => Math.max(prev - 1.5, 0));
+    }
+  }, [similarity]);
 
   const isDesktop = () =>
     typeof window !== "undefined" && window.innerWidth >= 1024;
@@ -626,7 +637,13 @@ const YoutubePoseTracking: React.FC = () => {
           </Overlay>
         )}
 
-        {isCapturing && <PerformanceOverlay similarity={similarity} />}
+        {isCapturing && (
+          <>
+            <FlowStateGlow $isFlow={momentum >= 90} />
+            <BurnBar momentum={momentum} />
+            <PerformanceOverlay similarity={similarity} />
+          </>
+        )}
       </VideoContainer>
 
       {showResult && (
@@ -642,6 +659,21 @@ const YoutubePoseTracking: React.FC = () => {
 };
 
 export default YoutubePoseTracking;
+
+const FlowStateGlow = styled.div<{ $isFlow: boolean }>`
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  background: ${(props) =>
+    props.$isFlow
+      ? "radial-gradient(circle at center, transparent 30%, rgba(219, 144, 255, 0.25) 100%)"
+      : "none"};
+  transition: background 1s ease-in-out;
+  z-index: 15;
+`;
 
 const Container = styled.div`
   position: relative;
